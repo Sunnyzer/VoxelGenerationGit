@@ -1,5 +1,3 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -46,7 +44,7 @@ public class World : MonoBehaviour
         }
     }
 
-        private void GenerateVoxels(ChunkData data)
+    private void GenerateVoxels(ChunkData data)
     {
         for (int x = 0; x < data.chunkSize; x++)
         {
