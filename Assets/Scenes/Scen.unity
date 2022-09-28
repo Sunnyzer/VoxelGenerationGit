@@ -154,10 +154,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   chunks: []
   noiseScale: 0.03
-  chunkSize: 8
+  chunkSize: 10
   chunkHeight: 25
-  chunksAmountX: 6
-  chunksAmountY: 6
+  chunksAmountX: 10
+  chunksAmountY: 10
   chunkPrefab: {fileID: 7908412842686521848, guid: 6d48aca87d34fbe48bcc753e24192b29, type: 3}
 --- !u!4 &139201775
 Transform:
@@ -203,6 +203,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waterThreshold: 10
+  blocks: 
 --- !u!4 &174128148
 Transform:
   m_ObjectHideFlags: 0
@@ -423,6 +424,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   waterThreshold: 2
+  blocks: 
 --- !u!4 &1266145393
 Transform:
   m_ObjectHideFlags: 0
