@@ -1,52 +1,46 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
-
-public struct Dir
+struct NeighborVertices
 {
-    public int pas;
-    public int move;
-    public int first;
-    public int end;
-    public Dir(int _pas, int _move, int _first, int _end)
+    public int vertice;
+    public List<int> neighbor;
+    public List<int> neighborAngle;
+    public NeighborVertices(int _vertice, List<int> _neighbor, List<int> _neighborAngle)
     {
-        pas = _pas;
-        move = _move;
-        first = _first;
-        end = _end;
+        vertice = _vertice;
+        neighbor = _neighbor;
+        neighborAngle = _neighborAngle;
     }
-
 }
 
-enum EShape
-{
-    CubeShape,
-    TriangleShape,
-}
 public class Cube : MonoBehaviour
 {
     #region Field/Properties
-    #region Event
-    #endregion Event
     #region NonSerialize
     Mesh mesh;
-    List<Vector3> vertices = new List<Vector3>();
-    [SerializeField] List<int> triangles = new List<int>();
+    [SerializeField] List<Vector3> vertices = new List<Vector3>();
+    List<int> triangles = new List<int>();
     List<Vector2> uvs = new List<Vector2>();
-    Dictionary<Vector3, Dir> dirValue = new Dictionary<Vector3, Dir>()
+    public static Dictionary<Vector3, int> dirValue = new Dictionary<Vector3, int>()
     {
-        { Vector3.forward, new Dir(4,1,0,3) },
-        { Vector3.right, new Dir(1,2,0,6) },
-        { Vector3.up, new Dir(2,4,0,5) },
+        { Vector3.forward, 1 },
+        { Vector3.right, 2 },
+        { Vector3.up, 4 },
     };
-
+    public static Dictionary<int, Vector3> valueCoef = new Dictionary<int, Vector3>()
+    {
+        { 0, new Vector3Int(1, 1, 1) },
+        { 1, new Vector3(-1, 1, 1) },
+        { 2, new Vector3(1, 1,-1) },
+        { 3, new Vector3(-1, 1, -1) },
+        { 4, new Vector3(1, -1, 1) },
+        { 5, new Vector3(-1, -1, 1) },
+        { 6, new Vector3(1, -1, -1) },
+        { 7, new Vector3(-1, -1, -1) },
+    };
+    List<NeighborVertices> neighborVertices = new List<NeighborVertices>();
     #endregion NonSerialize
-    #region Serialize
-    [SerializeField,Range(0.1f, 3)] float cubeSize = 1;
-    #endregion Serialize
-    #region Properties
-    #endregion Properties
     #endregion Field/Properties
     #region Methods
     #region UnityMethods
@@ -59,45 +53,50 @@ public class Cube : MonoBehaviour
         mesh.SetUVs(0, uvs);
         mesh.RecalculateNormals();
         GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<MeshCollider>().sharedMesh = mesh;
     }
 
     private void DrawCube()
     {
         vertices.Add(Vector3.zero);
-        vertices.Add(Vector3.right * cubeSize);
-        vertices.Add(Vector3.up * cubeSize);
-        vertices.Add((Vector3.up + Vector3.right) * cubeSize);
+        vertices.Add(Vector3.right);
+        vertices.Add(Vector3.up);
+        vertices.Add((Vector3.up + Vector3.right));
 
-        vertices.Add(Vector3.forward * cubeSize);
-        vertices.Add((Vector3.forward + Vector3.right) * cubeSize);
-        vertices.Add((Vector3.forward + Vector3.up) * cubeSize);
-        vertices.Add((Vector3.forward + Vector3.up + Vector3.right) * cubeSize);
+        vertices.Add(Vector3.forward);
+        vertices.Add((Vector3.forward + Vector3.right));
+        vertices.Add((Vector3.forward + Vector3.up));
+        vertices.Add((Vector3.forward + Vector3.up + Vector3.right) );
         SetTriangleToMakeCube();
     }
     void SetTriangleToMakeCube()
     {
-        foreach (var item in dirValue)
+        int _baseStart = 0;
+        int _baseEnd = 7;
+        List<int> neighborVertice0 = new List<int>() { _baseStart + dirValue[Vector3.forward] * (int)valueCoef[_baseStart].x, _baseStart + dirValue[Vector3.right] * (int)valueCoef[_baseStart].y, _baseStart + dirValue[Vector3.up] * (int)valueCoef[_baseStart].x };
+        List<int> neighborVertice7 = new List<int>() { _baseEnd + dirValue[Vector3.up] * (int)valueCoef[_baseEnd].z, _baseEnd + dirValue[Vector3.right] * (int)valueCoef[_baseEnd].y, _baseEnd + dirValue[Vector3.forward] * (int)valueCoef[_baseEnd].x };
+        neighborVertices.Add(new NeighborVertices(_baseStart, neighborVertice0, neighborVertice7));
+        neighborVertices.Add(new NeighborVertices(_baseEnd, neighborVertice7, neighborVertice0));
+        for (int i = 0; i < 2; i++)
         {
-            int move = item.Value.move;
-            int pas = item.Value.pas;
-            int first = item.Value.first;
-            int end = item.Value.end;
-            int tempFirst = first;
-            int tempEnd = end;
-            for (int i = 0; i < 2; i++)
+            int z = 2;
+            int y = 0;
+            int x = 1;
+            NeighborVertices _neighborVertices = neighborVertices[i];
+            for (int j = 0; j < 3; j++)
             {
-                SetFace(tempFirst,first,tempEnd,end,move,pas);
-                first += pas;
-                end += pas;
-                tempFirst = end;
-                tempEnd = first;
+                triangles.Add(_neighborVertices.vertice);
+                triangles.Add(_neighborVertices.neighbor[j]);
+                triangles.Add(_neighborVertices.neighbor[z]);//2 //0 // 1
+
+                triangles.Add(_neighborVertices.neighborAngle[j]);
+                triangles.Add(_neighborVertices.neighbor[y]);//0 //2 //1
+                triangles.Add(_neighborVertices.neighbor[x]);//1 //0 //2 
+                z = z > 1 ? 0 : z + 1;
+                y = y <= 0 ? 2 : y - 1;
+                x = x <= 0 ? 2 : x - 1;
             }
         }
-    }
-    void SetFace(int tempFirst, int first, int tempEnd, int end, int move, int pas)
-    {
-        triangles.Add(tempFirst); triangles.Add(end - move); triangles.Add(first + move);
-        triangles.Add(tempEnd); triangles.Add(first + move); triangles.Add(end - move);
     }
     private void OnDrawGizmos()
     {
