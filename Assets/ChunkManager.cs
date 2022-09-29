@@ -2,15 +2,30 @@ using UnityEngine;
 
 public class ChunkManager : MonoBehaviour
 {
+    static private ChunkManager instance = null;
+    static public ChunkManager Instance => instance;
 	[SerializeField] MyChunk[] chunks;
 	[SerializeField] float noiseScale = 0.03f;
 	[SerializeField] int chunkSize = 8;
 	[SerializeField] int chunkHeight = 25;
-	[SerializeField] int chunksAmountX = 3;
-	[SerializeField] int chunksAmountY = 3;
+	int chunksAmountX = 10;
+	int chunksAmountY = 10;
 	[SerializeField] MyChunk chunkPrefab = null;
+    static public int x = 0;
+    static public int y = 0;
+    [SerializeField] public int blockSize = 1;
+    private void Awake()
+    {
+        if(instance)
+        {
+            return;
+        }
+        instance = this;
+    }
     private void Start()
     {
+        x = Random.Range(0,1);
+        y = Random.Range(0,1);
         chunks = new MyChunk[chunksAmountX * chunksAmountY];
         for (int i = 0; i < chunksAmountX; i++)
         {
