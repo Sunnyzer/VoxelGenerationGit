@@ -153,13 +153,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunks: []
-  noiseScale: 0.03
-  chunkSize: 8
+  noiseScale: 0.01
+  chunkSize: 16
   chunkHeight: 25
-  chunksAmountX: 1
-  chunksAmountY: 1
+  chunksAmountX: 2
+  chunksAmountY: 2
   chunkPrefab: {fileID: 7908412842686521848, guid: 6d48aca87d34fbe48bcc753e24192b29, type: 3}
-  blockSize: 1
 --- !u!4 &139201775
 Transform:
   m_ObjectHideFlags: 0
@@ -170,7 +169,6 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -264,7 +262,6 @@ Transform:
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -348,7 +345,6 @@ Transform:
   m_LocalRotation: {x: -0.0047730547, y: 0.9941992, z: -0.049856205, w: 0.09518116}
   m_LocalPosition: {x: -1.21, y: 1.41, z: 4.755}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0

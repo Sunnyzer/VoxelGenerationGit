@@ -8,24 +8,34 @@ public class ChunkManager : MonoBehaviour
 	[SerializeField] float noiseScale = 0.03f;
 	[SerializeField] int chunkSize = 8;
 	[SerializeField] int chunkHeight = 25;
-	int chunksAmountX = 10;
-	int chunksAmountY = 10;
+    [SerializeField] int chunksAmountX = 10;
+    [SerializeField] int chunksAmountY = 10;
 	[SerializeField] MyChunk chunkPrefab = null;
     static public int x = 0;
     static public int y = 0;
-    [SerializeField] public int blockSize = 1;
     private void Awake()
     {
         if(instance)
         {
+            Destroy(this);
             return;
         }
         instance = this;
     }
+    public MyChunk GetChunk(int x,int z)
+    {
+        int _posX = x / 15;
+        int _posZ = z / 15;
+        if (_posX < 0 || _posZ < 0) return null; 
+        int _index = _posX + _posZ * chunksAmountX;
+        if(_index < chunks.Length && _index >= 0)
+            return chunks[_index];
+        return null;
+    }
     private void Start()
     {
-        x = Random.Range(0,1);
-        y = Random.Range(0,1);
+        x = Random.Range(0,0);
+        y = Random.Range(0,0);
         chunks = new MyChunk[chunksAmountX * chunksAmountY];
         for (int i = 0; i < chunksAmountX; i++)
         {

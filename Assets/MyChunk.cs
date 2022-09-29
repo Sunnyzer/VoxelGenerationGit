@@ -8,10 +8,12 @@ public class MyChunk : MonoBehaviour
     float noiseScale = 0.03f;
     Mesh chunkMesh;
     [SerializeField] int waterThreshold = 20;
-    [SerializeField] BlockType[] blocks;
-    [SerializeField] int blockSize = 1;
+    [SerializeField] BlockType[,,] blocks;
+    int blockSize = 1;
     int countBlocks = 0;
     [SerializeField] bool drawGizmos = true;
+    [SerializeField] bool testDrawGizmos = false;
+    [SerializeField] List<MyChunk> chunkNeighbor = new List<MyChunk>();
     public static List<Vector3Int> direction = new List<Vector3Int>()
     { 
         Vector3Int.forward,
@@ -34,17 +36,28 @@ public class MyChunk : MonoBehaviour
     private void GenerateVoxels()
     {
         countBlocks = chunkSize * chunkSize * chunkHeight;
-        blocks = new BlockType[countBlocks];
-        blockSize = ChunkManager.Instance.blockSize;
-        for (int z = 0; z < chunkSize; z++)
+        blocks = new BlockType[chunkSize,chunkHeight,chunkSize];
+        GenerateBlocksChunk();
+        MakeMesh();
+        chunkMesh = new Mesh();
+        chunkMesh.vertices = vertices.ToArray();
+        chunkMesh.triangles = triangle.ToArray();
+        chunkMesh.SetUVs(0,uvs);
+        chunkMesh.RecalculateNormals();
+        GetComponent<MeshFilter>().mesh = chunkMesh;
+        GetComponent<MeshCollider>().sharedMesh = chunkMesh;
+    }
+    void GenerateBlocksChunk()
+    {
+        for (int x = 0; x < chunkSize; x++)
         {
-            for (int x = 0; x < chunkSize; x++)
+            for (int z = 0; z < chunkSize; z++)
             {
                 float noiseValue = Mathf.PerlinNoise((ChunkManager.x + transform.position.x + x) * noiseScale, (ChunkManager.y + transform.position.z + z) * noiseScale);
                 int groundPosition = Mathf.RoundToInt(noiseValue * chunkHeight);
+                BlockType voxelType = BlockType.Dirt;
                 for (int y = 0; y < chunkHeight; y++)
                 {
-                    BlockType voxelType = BlockType.Dirt;
                     if (y > groundPosition)
                     {
                         if (y < waterThreshold)
@@ -56,59 +69,52 @@ public class MyChunk : MonoBehaviour
                     {
                         voxelType = BlockType.Grass_Dirt;
                     }
-                    int index = GetIndexFromPosition(x, y, z);
-                    blocks[index] = voxelType;
+                    //int index = GetIndexFromPosition(x, y, z);
+                    blocks[x,y,z] = voxelType;
                 }
             }
         }
-        for (int i = 0; i < countBlocks; i++)
-        {
-            Vector3Int _cubePos = GetPositionFromIndex(i);
-            Vector3Int[] directionToFill = IsBlockFill(_cubePos);
-            if(directionToFill.Length != 0 && blocks[i] != BlockType.Air)
-            foreach (Vector3 _dir in directionToFill)
-            {
-                Vector3 _test = _dir;
-                bool _upVector = Vector3.up == _test || Vector3.down == _test;
-                Vector3 _right = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _test;
-                Vector3 _addUp = _upVector ? Vector3.right : Vector3.up;
-                vertices.Add( _cubePos + _test * 0.5f + _addUp * 0.5f + _right * 0.5f);
-                vertices.Add( _cubePos + _test * 0.5f + _addUp * 0.5f - _right * 0.5f);
+    }
+    void MakeMesh()
+    {
+        for (int x = 0; x < chunkSize; x++)
+            for (int z = 0; z < chunkSize; z++)
+                for (int y = 0; y < chunkHeight; y++)
+                {
+                    Vector3Int[] directionToFill = IsBlockFill(new Vector3Int(x,y,z));
+                    if (directionToFill.Length != 0 && blocks[x,y,z] != BlockType.Air)
+                        foreach (Vector3 _dir in directionToFill)
+                        {
+                            Vector3 _test = _dir;
+                            bool _upVector = Vector3.up == _test || Vector3.down == _test;
+                            Vector3 _right = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _test;
+                            Vector3 _addUp = _upVector ? Vector3.right : Vector3.up;
+                            vertices.Add(new Vector3Int(x, y, z) + _test * 0.5f + _addUp * 0.5f + _right * 0.5f);
+                            vertices.Add(new Vector3Int(x, y, z) + _test * 0.5f + _addUp * 0.5f - _right * 0.5f);
 
-                vertices.Add( _cubePos + _test * 0.5f - _addUp * 0.5f + _right * 0.5f);
-                vertices.Add( _cubePos + _test * 0.5f - _addUp * 0.5f - _right * 0.5f);
+                            vertices.Add(new Vector3Int(x, y, z) + _test * 0.5f - _addUp * 0.5f + _right * 0.5f);
+                            vertices.Add(new Vector3Int(x, y, z) + _test * 0.5f - _addUp * 0.5f - _right * 0.5f);
 
-                triangle.Add(vertices.Count - 4);   
-                triangle.Add(vertices.Count - 3);   
-                triangle.Add(vertices.Count - 2);
-                    
-                triangle.Add(vertices.Count - 3);   
-                triangle.Add(vertices.Count - 1);   
-                triangle.Add(vertices.Count - 2);   
-            }
-        }
-        chunkMesh = new Mesh();
-        chunkMesh.vertices = vertices.ToArray();
-        chunkMesh.triangles = triangle.ToArray();
-        chunkMesh.SetUVs(0,uvs);
-        GetComponent<MeshFilter>().mesh = chunkMesh;
-        GetComponent<MeshCollider>().sharedMesh = chunkMesh;
+                            triangle.Add(vertices.Count - 4);
+                            triangle.Add(vertices.Count - 3);
+                            triangle.Add(vertices.Count - 2);
+
+                            triangle.Add(vertices.Count - 3);
+                            triangle.Add(vertices.Count - 1);
+                            triangle.Add(vertices.Count - 2);
+                        }
+                }
     }
     public int GetIndexFromPosition(int x,int y,int z)
     {
-        return x + y * chunkSize + chunkSize * chunkHeight * z;
-    }
-    public int GetIndexFromPosition(Vector3Int _pos)
-    {
-        return _pos.x + _pos.y * chunkSize + chunkSize * chunkHeight * _pos.z;
+        return x + z * chunkSize + chunkHeight * y;
     }
     public Vector3Int GetPositionFromIndex(int _index) 
     {
-        int chunkHeightPas = chunkSize * chunkHeight;
-        int z = _index / chunkHeightPas;
-        _index = _index - chunkHeightPas * z;
-        int y = _index / chunkSize;
-        _index = _index - chunkSize * y;
+        int y = _index / chunkHeight;
+        _index = _index - chunkHeight * y;
+        int z = _index / chunkSize;
+        _index = _index - chunkSize * z;
         int x = _index;
         return new Vector3Int(x,y,z);
     }    
@@ -130,44 +136,59 @@ public class MyChunk : MonoBehaviour
             Vector3Int _posDir = _pos + _dir;
             if (IsPositionInChunk(_posDir))
             {
-                int _index = GetIndexFromPosition(_posDir.x, _posDir.y, _posDir.z);
-                if (blocks[_index] == BlockType.Air || blocks[_index] == BlockType.Water)
+                if (blocks[_posDir.x, _posDir.y, _posDir.z] == BlockType.Air || blocks[_posDir.x, _posDir.y, _posDir.z] == BlockType.Water)
+                {
                     _directionFill.Add(_dir);
+                }
             }
+            //else if (_dir != Vector3.up && _dir != Vector3.down)
+            //{
+            //    Vector3 _posCube = transform.position + _dir * chunkSize;
+            //    MyChunk _chunkNeighbor = ChunkManager.Instance.GetChunk((int)_posCube.x, (int)_posCube.z);
+            //    if (!_chunkNeighbor) continue;
+            //    if (!chunkNeighbor.Contains(_chunkNeighbor))
+            //        chunkNeighbor.Add(_chunkNeighbor);
+            //    Vector3Int _cal =  _pos - new Vector3Int((chunkSize-1) * _dir.x, _dir.y, (chunkSize - 1) * _dir.z);
+            //    if (_chunkNeighbor.blocks[_cal.x, _cal.y, _cal.z] == BlockType.Air)
+            //    {
+            //        _directionFill.Add(_dir);
+            //    }
+            //}
         }
         return _directionFill.ToArray();
     }
     private void OnDrawGizmos()
     {
-        for (int i = 0; i < countBlocks; i++)
+        if (!testDrawGizmos) return;
+        for (int i = 0; i < vertices.Count; i++)
         {
             Gizmos.color = Color.black;
-            if (i < vertices.Count)
-                Gizmos.DrawCube(transform.position + vertices[i], Vector3.one * 0.05f);
-            Vector3 _coef = Vector3.zero;
-            Vector3 _scale = Vector3.one * blockSize;
-            switch (blocks[i])
+            Gizmos.DrawCube(transform.position + vertices[i], Vector3.one * 0.05f);
+        }
+        if (!drawGizmos) return;
+        for (int y = 0; y < chunkHeight; y++)
+        {
+            for (int z = 0; z < chunkSize; z++)
             {
-                case BlockType.Nothing:
-                    continue;
-                case BlockType.Air:
-                    continue;
-                case BlockType.Grass_Dirt:
-                    Gizmos.color = Color.green;
-                    break;
-                case BlockType.Dirt:
-                    Gizmos.color = Color.yellow;
-                    break;
-                case BlockType.Water:
-                    _scale = new Vector3(1,0.8f,1);
-                    _coef = new Vector3(0,-0.2f,0);
-                    Gizmos.color = Color.blue;
-                    break;
+                for (int x = 0; x < chunkSize; x++)
+                {
+                    switch (blocks[x,y,z])
+                    {
+                        case BlockType.Air:
+                            continue;
+                        case BlockType.Grass_Dirt:
+                            Gizmos.color = Color.green;
+                            break;
+                        case BlockType.Dirt:
+                            Gizmos.color = Color.yellow;
+                            break;
+                        case BlockType.Water:
+                            Gizmos.color = Color.blue;
+                            break;
+                    }
+                    Gizmos.DrawCube(transform.position + new Vector3(x,y,z),Vector3.one);
+                }
             }
-            Vector3Int _posBlock = GetPositionFromIndex(i);
-            if (IsBlockFill(_posBlock).Length == 0) continue;
-            if (!drawGizmos) continue;
-            Gizmos.DrawCube(transform.position /*+ new Vector3(0.5f, 0.5f, 0.5f)*/ + _posBlock + _coef, _scale);
         }
     }
 }
