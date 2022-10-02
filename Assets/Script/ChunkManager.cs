@@ -11,8 +11,8 @@ public class ChunkManager : MonoBehaviour
 	[SerializeField] int chunkHeight = 25;
     [SerializeField] int chunksAmountX = 10;
     [SerializeField] int chunksAmountY = 10;
-	[SerializeField] MyChunk chunkPrefab = null;
-	[SerializeField] List<MyChunk> chunks = new List<MyChunk>();
+	[SerializeField] Chunk chunkPrefab = null;
+	List<Chunk> chunks = new List<Chunk>();
     static public int x = 0;
     static public int y = 0;
     private void Awake()
@@ -24,7 +24,7 @@ public class ChunkManager : MonoBehaviour
         }
         instance = this;
     }
-    public MyChunk GetChunk(int x,int z)
+    public Chunk GetChunk(int x,int z)
     {
         int _index = z + x * chunksAmountX;
         if (_index < chunks.Count && _index >= 0)
@@ -39,16 +39,18 @@ public class ChunkManager : MonoBehaviour
         {
             for (int j = 0; j < chunksAmountY; j++)
             {
-                MyChunk myChunk = Instantiate<MyChunk>(chunkPrefab, new Vector3(i * chunkSize, 0, j * chunkSize), Quaternion.identity, transform);
+                Chunk myChunk = Instantiate<Chunk>(chunkPrefab, new Vector3(i * chunkSize, 0, j * chunkSize), Quaternion.identity, transform);
                 yield return myChunk.Init(noiseScale, chunkSize, chunkHeight);
                 myChunk.name = "myChunk " + (i* chunksAmountX + j);
                 chunks.Add(myChunk);
             }
         }
-        Debug.Log("Finish load all chunks : " + Time.time);
+        Debug.Log("Create chunks : " + Time.time);
+        float _timeFinishChunk = Time.time;
         for (int i = 0; i < chunks.Count; i++)
         {
             yield return chunks[i].MakeMesh();
         }
+        Debug.Log("Finish load all chunks : " + (Time.time - _timeFinishChunk));
     }
 }
