@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Jobs;
 using UnityEngine;
 
 [Serializable]
@@ -85,9 +86,9 @@ public class ChunkUpgrade : MonoBehaviour
         chunkHeight = _chunckHeight;
         chunkSize = _chunkSize;
         chunksIndex = new Vector2Int((int)transform.position.x / _chunkSize, (int)transform.position.z / _chunkSize);
-        yield return GenerateVoxels();
+        yield return GenerateVoxelsBlocks();
     }
-    IEnumerator GenerateVoxels()
+    private IEnumerator GenerateVoxelsBlocks()
     {
         blocks = new BlockData[chunkSize, chunkHeight, chunkSize];
         for (int x = 0; x < chunkSize; x++)
@@ -116,7 +117,7 @@ public class ChunkUpgrade : MonoBehaviour
             yield return null;
         }
     }
-    public void SetNeighBorChunk()
+    private void SetNeighBorChunk()
     {
         foreach (Vector3Int dir in diagonalDirection)
         {
@@ -126,7 +127,7 @@ public class ChunkUpgrade : MonoBehaviour
             neighborChunk[dir] = _chunkNeighbor;
         }
     }
-    public IEnumerator MakeMesh()
+    public IEnumerator SetMakeMesh()
     {
         SetNeighBorChunk();
         chunksVertices.Clear();
@@ -163,32 +164,7 @@ public class ChunkUpgrade : MonoBehaviour
         }
         RenderMesh();
     }
-    public bool IsBlockInChunk(Vector3Int _pos)
-    {
-        return (_pos.x < blocks.GetLength(0) && _pos.x >= 0) &&
-               (_pos.y < blocks.GetLength(1) && _pos.y >= 0) &&
-               (_pos.z < blocks.GetLength(2) && _pos.z >= 0);
-    }
-    public void DestroyBlock(Vector3Int _pos)
-    {
-        blockDebug = _pos;
-        Debug.Log(_pos);
-        blocks[_pos.x, _pos.y, _pos.z].blockType = BlockType.Air;
-        chunksTriangles.Clear();
-        chunksVertices.Clear();
-        for (int x = 0; x < chunkSize; x++)
-        {
-            for (int z = 0; z < chunkSize; z++)
-            {
-                for (int y = 0; y < chunkHeight; y++)
-                {
-                    Vector3Int _blockPos = new Vector3Int(x, y, z);
-                    MakeCube(_blockPos);
-                }
-            }
-        }
-        RenderMesh();
-    }
+    
     public void DestroyBlockProfondeur(Vector3Int _pos, float _radius)
     {
         List<ChunkUpgrade> _toUpdate = new List<ChunkUpgrade>();
@@ -231,6 +207,12 @@ public class ChunkUpgrade : MonoBehaviour
         {
             _toUpdate[i].UpdateMesh();
         }
+    }
+    public bool IsBlockInChunk(Vector3Int _pos)
+    {
+        return (_pos.x < blocks.GetLength(0) && _pos.x >= 0) &&
+               (_pos.y < blocks.GetLength(1) && _pos.y >= 0) &&
+               (_pos.z < blocks.GetLength(2) && _pos.z >= 0);
     }
     void RenderMesh()
     {

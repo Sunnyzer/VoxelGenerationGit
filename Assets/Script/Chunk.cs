@@ -116,8 +116,7 @@ public class Chunk : MonoBehaviour
     }
     void RenderMesh()
     {
-        if (!chunkMesh)
-            chunkMesh = new Mesh();
+        chunkMesh = new Mesh();
         chunkMesh.vertices = vertices.ToArray();
         chunkMesh.triangles = triangle.ToArray();
         chunkMesh.SetUVs(0, uvs);

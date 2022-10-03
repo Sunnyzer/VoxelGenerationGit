@@ -54,45 +54,30 @@ public class ChunkManagerUpgrade : MonoBehaviour
     }
     private IEnumerator Start()
     {
-        x = UnityEngine.Random.Range(0,10000);
-        y = UnityEngine.Random.Range(0,10000);
+        yield return GenerateMap();
+    }
+    private IEnumerator GenerateMap()
+    {
+        x = UnityEngine.Random.Range(0, 10000);
+        y = UnityEngine.Random.Range(0, 10000);
         yield return CreateChunks(chunksAmountX, chunksAmountZ);
-        if(onDebug)
+
+        if (onDebug)
             Debug.Log("Create chunks : " + Time.time);
+        
         float _timeFinishChunk = Time.time;
-        Player player = FindObjectOfType<Player>();
-        UpdateChunkAtPos(player.transform.position);
+        yield return UpdateChunk();
 
         if (onDebug)
             Debug.Log("Finish load all chunks : " + (Time.time - _timeFinishChunk));
         OnFinishLoad?.Invoke();
     }
-
-    public void UpdateChunkAtPos(Vector3 _pos)
-    {
-        Vector2Int _indexChunk = GetChunkIndexFromWorldPosition(_pos);
-        Debug.Log(_indexChunk);
-        for (int x = -radiusChunks; x < radiusChunks; x++)
-        {
-            for (int z = -radiusChunks; z < radiusChunks; z++)
-            {
-                ChunkUpgrade _chunkToRender = GetChunk(_indexChunk.x + x, _indexChunk.y + z);
-                if (!_chunkToRender) continue;
-                StartCoroutine(_chunkToRender.MakeMesh());
-            }
-        }
-    }
-    public void UpdateChunkFromChunk(ChunkUpgrade _currentChunk)
-    {
-        UpdateChunkAtPos(_currentChunk.transform.position);
-    }
-
     public IEnumerator CreateChunks(int _sizeX,int _sizeY)
     {
         chunks = new ChunkUpgrade[_sizeX, _sizeY];
         for (int i = 0; i < _sizeX; i++)
         {
-            for (int j = 0; j < chunksAmountZ; j++)
+            for (int j = 0; j < _sizeY; j++)
             {
                 ChunkUpgrade myChunk = Instantiate<ChunkUpgrade>(chunkPrefab, new Vector3(i * chunkSize, 0, j * chunkSize), Quaternion.identity, transform);
                 yield return myChunk.Init(noiseScale, chunkSize, chunkHeight);
@@ -101,4 +86,24 @@ public class ChunkManagerUpgrade : MonoBehaviour
             }
         }
     }
+    public IEnumerator UpdateChunk()
+    {
+        for (int x = 0; x < chunksAmountX; x++)
+            for (int z = 0; z < chunksAmountZ; z++)
+                yield return chunks[x, z].SetMakeMesh();
+    }
+    public void UpdateChunkAtPos(Vector3 _pos)
+    {
+        Vector2Int _indexChunk = GetChunkIndexFromWorldPosition(_pos);
+        for (int x = -radiusChunks; x < radiusChunks; x++)
+        {
+            for (int z = -radiusChunks; z < radiusChunks; z++)
+            {
+                ChunkUpgrade _chunkToRender = GetChunk(_indexChunk.x + x, _indexChunk.y + z);
+                if (!_chunkToRender) continue;
+                StartCoroutine(_chunkToRender.SetMakeMesh());
+            }
+        }
+    }
+    public void UpdateChunkFromChunk(ChunkUpgrade _currentChunk) => UpdateChunkAtPos(_currentChunk.transform.position);
 }

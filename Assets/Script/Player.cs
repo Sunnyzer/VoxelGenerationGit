@@ -28,7 +28,7 @@ public class Player : MonoBehaviour
         float tempGravityScale = gravityScale;
         gravityScale = 0;
         ChunkManagerUpgrade.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
-        OnChunkGroundChange += () => { ChunkManagerUpgrade.Instance.UpdateChunkFromChunk(chunkGround); };
+        //OnChunkGroundChange += () => { ChunkManagerUpgrade.Instance.UpdateChunkFromChunk(chunkGround); };
     }
     private void Update()
     {
@@ -38,15 +38,6 @@ public class Player : MonoBehaviour
         rb.velocity = velocity.normalized * moveSpeed + new Vector3(0,rb.velocity.y,0);
         Collider[] _colliders = Physics.OverlapBox(transform.position - transform.up * height,Vector3.one * sizeFeetDetection, Quaternion.identity, groundLayer);
         isGrounded = _colliders.Length != 0;
-        if (isGrounded)
-        {
-            ChunkUpgrade _currentChunkGround = _colliders[0].GetComponent<ChunkUpgrade>();
-            if (chunkGround != _currentChunkGround)
-            {
-                chunkGround = _currentChunkGround;
-                OnChunkGroundChange?.Invoke();
-            }
-        }
         if(Input.GetKeyDown(KeyCode.Space) && isGrounded)
             rb.AddForce(Vector3.up * jumpHigh,ForceMode.Impulse);
         if (!isGrounded)
@@ -67,11 +58,11 @@ public class Player : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawCube(pointCube, Vector3.one * 0.9f);
+        Gizmos.DrawWireCube(pointCube, Vector3.one);
         if(isGrounded)
             Gizmos.color = Color.red;
         else
             Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position - transform.up * height,Vector3.one * sizeFeetDetection);
+        Gizmos.DrawWireCube(transform.position - transform.up * height, Vector3.one * sizeFeetDetection);
     }
 }
