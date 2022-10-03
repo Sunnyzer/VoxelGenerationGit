@@ -1,9 +1,11 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.XR;
 
 public class Player : MonoBehaviour
 {
+    public event Action OnChunkGroundChange = null; 
     [SerializeField] BoxCollider boxCollider;
     [SerializeField] Rigidbody rb;
     [SerializeField] Vector3 moveDirection;
@@ -15,10 +17,19 @@ public class Player : MonoBehaviour
     [SerializeField] float sizeFeetDetection = 0.75f;
     [SerializeField] float gravityScale = 1f;
     [SerializeField] Transform orientation = null;
+    [SerializeField] int radius = 3;
+    [SerializeField] ChunkUpgrade chunkGround = null;
     Vector3 forwardOrientation;
     Vector3 rightOrientation;
     Vector3Int pointCube;
     bool isGrounded = false;
+    private void Start()
+    {
+        float tempGravityScale = gravityScale;
+        gravityScale = 0;
+        ChunkManagerUpgrade.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
+        OnChunkGroundChange += () => { ChunkManagerUpgrade.Instance.UpdateChunkFromChunk(chunkGround); };
+    }
     private void Update()
     {
         forwardOrientation = new Vector3(orientation.forward.x, 0, orientation.forward.z);
@@ -27,6 +38,15 @@ public class Player : MonoBehaviour
         rb.velocity = velocity.normalized * moveSpeed + new Vector3(0,rb.velocity.y,0);
         Collider[] _colliders = Physics.OverlapBox(transform.position - transform.up * height,Vector3.one * sizeFeetDetection, Quaternion.identity, groundLayer);
         isGrounded = _colliders.Length != 0;
+        if (isGrounded)
+        {
+            ChunkUpgrade _currentChunkGround = _colliders[0].GetComponent<ChunkUpgrade>();
+            if (chunkGround != _currentChunkGround)
+            {
+                chunkGround = _currentChunkGround;
+                OnChunkGroundChange?.Invoke();
+            }
+        }
         if(Input.GetKeyDown(KeyCode.Space) && isGrounded)
             rb.AddForce(Vector3.up * jumpHigh,ForceMode.Impulse);
         if (!isGrounded)
@@ -41,7 +61,7 @@ public class Player : MonoBehaviour
         pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
         if(Input.GetMouseButtonDown(0))
         {
-            StartCoroutine(_chunk.DestroyBlockProfondeur(_chunk.GetPositionBlockInChunkFromClampPosition(pointCube),7));
+            _chunk.DestroyBlockProfondeur(pointCube, radius);
         }
     }
     private void OnDrawGizmos()
