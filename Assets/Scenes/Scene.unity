@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 52ffa7fe992e8e74183dafa94453fda4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  noiseScale: 0
+  noiseScale: 0.003
   chunkSize: 16
   chunkHeight: 100
   chunksAmountX: 25
@@ -186,7 +186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b374d7805a2619a42ade220ff2d69b75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  noiseScale: 0.005
+  noiseScale: 0.003
   chunkSize: 16
   chunkHeight: 100
   chunksAmountX: 4

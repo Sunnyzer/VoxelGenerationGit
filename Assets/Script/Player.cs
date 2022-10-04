@@ -52,7 +52,8 @@ public class Player : MonoBehaviour
         pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
         if(Input.GetMouseButtonDown(0))
         {
-            _chunk.DestroyBlockProfondeur(pointCube, radius);
+         //   _chunk.DestroyBlockProfondeur(pointCube, radius);
+            _chunk.DestroyBlock(pointCube);
         }
     }
     private void OnDrawGizmos()

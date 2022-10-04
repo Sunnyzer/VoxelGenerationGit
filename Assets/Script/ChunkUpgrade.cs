@@ -9,9 +9,9 @@ public class BlockData
 {
     public Vector3Int position;
     public BlockType blockType = BlockType.Nothing;
-    //public List<Vector3> vertices = new List<Vector3>();
-    //public List<int> triangle = new List<int>();
     public BlockData[] neighborBlockData;
+    public List<int> placementTriangles = new List<int>();
+    public List<int> placementVertices = new List<int>(); 
     public ChunkUpgrade owner;
     public BlockData(BlockType _blockType, Vector3Int _pos,ChunkUpgrade _owner)
     {
@@ -57,7 +57,6 @@ public class ChunkUpgrade : MonoBehaviour
     [SerializeField] List<int> chunksTriangles = new List<int>();
     [SerializeField] List<Vector2> uvs = new List<Vector2>();
     [SerializeField] public Vector2Int chunksIndex;
-    [SerializeField] Vector3Int blockDebug;
     Dictionary<Vector3Int, ChunkUpgrade> neighborChunk = new Dictionary<Vector3Int, ChunkUpgrade>()
     {
         { Vector3Int.forward, null },
@@ -77,8 +76,8 @@ public class ChunkUpgrade : MonoBehaviour
     int chunkSize = 8;
     int waterThreshold = 20;
 
-    int radius = 0;
-    Vector3Int blockPosDestroy;
+    BlockData blockDebug;
+    [SerializeField] private bool onDebug;
 
     public IEnumerator Init(float _noiseScale, int _chunkSize, int _chunckHeight)
     {
@@ -164,14 +163,21 @@ public class ChunkUpgrade : MonoBehaviour
         }
         RenderMesh();
     }
-    
+
+    public void DestroyBlock(Vector3Int _pos)
+    {
+        BlockData _blockData = ChunkManagerUpgrade.Instance.GetBlockDataFromWorldPosition(_pos);
+        if (_blockData == null) return;
+        _blockData.blockType = BlockType.Air;
+        Debug.Log(_blockData.placementTriangles + " " + _blockData.placementVertices);
+        blockDebug = _blockData;
+        onDebug = true;
+    }
     public void DestroyBlockProfondeur(Vector3Int _pos, float _radius)
     {
         List<ChunkUpgrade> _toUpdate = new List<ChunkUpgrade>();
         _toUpdate.Add(this);
         int radiusRound = Mathf.RoundToInt(_radius);
-        radius = radiusRound;
-        blockPosDestroy = _pos;
         for (int x = -radiusRound; x < radiusRound; x++)
         {
             for (int z = -radiusRound; z < radiusRound; z++)
@@ -252,6 +258,9 @@ public class ChunkUpgrade : MonoBehaviour
             chunksTriangles.Add(chunksVertices.Count - 3);
             chunksTriangles.Add(chunksVertices.Count - 1);
             chunksTriangles.Add(chunksVertices.Count - 2);
+            currentBlock.placementTriangles.Add(chunksTriangles.Count - 6);
+            currentBlock.placementVertices.Add(chunksVertices.Count - 4);
+
         }
     }
     void GetAllNeighBorBlock(Vector3Int _blockPos, out BlockData[] _blockDatas)
@@ -290,16 +299,12 @@ public class ChunkUpgrade : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        for (int x = -radius; x < radius; x++)
+        if (!onDebug) return;
+        for (int i = 0; i < blockDebug.placementTriangles.Count; i++) 
         {
-            for (int z = -radius; z < radius; z++)
+            for (int j = 0; j < 6; j++)
             {
-                for (int y = -radius; y < radius; y++)
-                {
-                    Vector3Int _posBlock = new Vector3Int(blockPosDestroy.x + x, blockPosDestroy.y + y, blockPosDestroy.z + z);
-                    if ((blockPosDestroy - _posBlock).sqrMagnitude >= radius * radius) continue;
-                    Gizmos.DrawWireCube(_posBlock, Vector3.one);
-                }
+                Gizmos.DrawCube(transform.position + chunksVertices[chunksTriangles[j + blockDebug.placementTriangles[i]]] ,Vector3.one * 0.05f);
             }
         }
     }
