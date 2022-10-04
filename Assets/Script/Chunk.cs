@@ -1,81 +1,100 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
+public class BlockData
+{
+    public Vector3Int position;
+    public BlockType blockType = BlockType.Nothing;
+    [HideInInspector] public BlockData[] neighborBlockData;
+    public List<int> placementTriangles = new List<int>();
+    public List<int> placementVertices = new List<int>(); 
+    public Chunk owner;
+    public BlockData(BlockType _blockType, Vector3Int _pos,Chunk _owner)
+    {
+        blockType = _blockType;
+        position = _pos;
+        owner = _owner;
+    }
+    public static bool operator! (BlockData _a) => _a == null;
+}
+
 public class Chunk : MonoBehaviour
 {
-    int chunkHeight = 30;
-    int chunkSize = 8;
-    float noiseScale = 0.03f;
-    Mesh chunkMesh;
-    [SerializeField] int waterThreshold = 20;
-    [SerializeField] BlockType[,,] blocks;
-    [SerializeField] List<Chunk> chunkNeighbor = new List<Chunk>();
-    [SerializeField] Vector3 posBlockDebug;
-    [SerializeField] bool drawVerticesGizmo = false;
-    [SerializeField] bool drawNeighBorGizmo = true;
-    [SerializeField] Dictionary<Vector3, int> verticesId = new Dictionary<Vector3, int>();
-    static public Vector3Int GetBlockPositionFromWorldPosition(Vector3 _position, Vector3 _direction)
+    public static List<Vector3Int> diagonalDirection = new List<Vector3Int>()
     {
-        Vector3 _posNoTruncate = _position - _direction * .4f;
-        return new Vector3Int(Mathf.RoundToInt(_posNoTruncate.x), Mathf.RoundToInt(_posNoTruncate.y), Mathf.RoundToInt(_posNoTruncate.z)); ; 
-    }
+        Vector3Int.forward,
+        Vector3Int.back,
+        Vector3Int.right,
+        Vector3Int.left,
+        Vector3Int.forward + Vector3Int.left,
+        Vector3Int.forward + Vector3Int.right,
+        Vector3Int.back + Vector3Int.right,
+        Vector3Int.back + Vector3Int.left
+    };
     public static List<Vector3Int> direction = new List<Vector3Int>()
-    { 
+    {
+        Vector3Int.forward,
+        Vector3Int.back,
+        Vector3Int.right,
+        Vector3Int.left
+    };
+    public static List<Vector3Int> allDirection = new List<Vector3Int>()
+    {
         Vector3Int.forward,
         Vector3Int.back,
         Vector3Int.right,
         Vector3Int.left,
         Vector3Int.up,
-        Vector3Int.down,
+        Vector3Int.down
     };
-    [SerializeField] List<Vector3> vertices = new List<Vector3>();
-    List<int> triangle = new List<int>();
-    List<Vector2> uvs = new List<Vector2>();
-    public Vector3Int GetPositionBlockFromWorldPosition(Vector3 _pos, Vector3 _normal)
+    
+    [SerializeField] MeshFilter meshFilter;
+    [SerializeField] MeshCollider meshCollider;
+    [SerializeField] List<Vector3> chunksVertices = new List<Vector3>();
+    [SerializeField] List<int> chunksTriangles = new List<int>();
+    [SerializeField] List<Vector2> uvs = new List<Vector2>();
+    [SerializeField] public Vector2Int chunksIndex;
+    Dictionary<Vector3Int, Chunk> neighborChunk = new Dictionary<Vector3Int, Chunk>()
     {
-        Vector3 _posBlock = _pos - _normal * 0.5f;
-        return new Vector3Int(Mathf.RoundToInt(_posBlock.x), Mathf.RoundToInt(_posBlock.y), Mathf.RoundToInt(_posBlock.z));
-    }
-    public Vector3Int GetBlockPositionInChunkFromWorldPostion(Vector3Int _pos)
-    {
-        Vector3Int _clampPos = new Vector3Int(_pos.x - Mathf.RoundToInt(transform.position.x), 0, _pos.z - Mathf.RoundToInt(transform.position.z));
-        return new Vector3Int(_clampPos.x, _pos.y, _clampPos.z);
-    }
-    public void DestroyBlock(Vector3Int _pos)
-    {
-        blocks[_pos.x, _pos.y, _pos.z] = BlockType.Air;
-        StartCoroutine(MakeMesh());
-        for (int i = 0; i < chunkNeighbor.Count; i++)
-        {
-            StartCoroutine(chunkNeighbor[i].MakeMesh());
-        }
-    }
-    public bool IsBlockInChunk(Vector3Int _pos)
-    {
-        return (_pos.x < blocks.GetLength(0) && _pos.x >= 0) && (_pos.y < blocks.GetLength(1) && _pos.y >= 0) && (_pos.z < blocks.GetLength(2) && _pos.z >= 0);
-    }
-    public IEnumerator Init(float _noiseScale, int _chunkSize,int _chunckHeight)
+        { Vector3Int.forward, null },
+        { Vector3Int.back, null },
+        { Vector3Int.right, null },
+        { Vector3Int.left, null },
+        { Vector3Int.forward + Vector3Int.left, null },
+        { Vector3Int.forward + Vector3Int.right, null },
+        { Vector3Int.back + Vector3Int.right, null },
+        { Vector3Int.back + Vector3Int.left, null },
+    };
+    BlockData[,,] blocks;
+    public BlockData[,,] BlockDatas => blocks;
+    Mesh chunkMesh;
+    float noiseScale = 0.03f;
+    int chunkHeight = 30;
+    int chunkSize = 8;
+    int waterThreshold = 20;
+
+    [SerializeField] private bool onDebug;
+    private BlockData blockDebug;
+
+    public IEnumerator Init(float _noiseScale, int _chunkSize, int _chunckHeight)
     {
         noiseScale = _noiseScale;
         chunkHeight = _chunckHeight;
         chunkSize = _chunkSize;
-        GenerateVoxels();
-        yield break;
+        chunksIndex = new Vector2Int((int)transform.position.x / _chunkSize, (int)transform.position.z / _chunkSize);
+        yield return GenerateVoxelsBlocks();
     }
-    private void GenerateVoxels()
+    private IEnumerator GenerateVoxelsBlocks()
     {
-        blocks = new BlockType[chunkSize,chunkHeight,chunkSize];
-        GenerateBlocksChunk();
-        MakeMesh();
-    }
-    void GenerateBlocksChunk()
-    {
+        blocks = new BlockData[chunkSize, chunkHeight, chunkSize];
         for (int x = 0; x < chunkSize; x++)
         {
             for (int z = 0; z < chunkSize; z++)
             {
-                float noiseValue = Mathf.PerlinNoise((ChunkManager.x + transform.position.x + x) * noiseScale, (ChunkManager.y + transform.position.z + z) * noiseScale);
+                float noiseValue = Mathf.PerlinNoise((ChunkManager.noisePosX + transform.position.x + x) * noiseScale, (ChunkManager.noisePosY + transform.position.z + z) * noiseScale);
                 int groundPosition = Mathf.RoundToInt(noiseValue * chunkHeight);
                 BlockType voxelType = BlockType.Dirt;
                 for (int y = 0; y < chunkHeight; y++)
@@ -91,15 +110,46 @@ public class Chunk : MonoBehaviour
                     {
                         voxelType = BlockType.Grass_Dirt;
                     }
-                    blocks[x,y,z] = voxelType;
+                    blocks[x, y, z] = new BlockData(voxelType, new Vector3Int(x, y, z), this);
+                }
+            }
+            yield return null;
+        }
+    }
+    private void SetNeighBorChunk()
+    {
+        foreach (Vector3Int dir in diagonalDirection)
+        {
+            Vector2Int _chunkPos = new Vector2Int(chunksIndex.x + dir.x, chunksIndex.y + dir.z);
+            Chunk _chunkNeighbor = ChunkManager.Instance.GetChunk(_chunkPos.x, _chunkPos.y);
+            if (!_chunkNeighbor) continue;
+            neighborChunk[dir] = _chunkNeighbor;
+        }
+    }
+    public IEnumerator SetMakeMesh()
+    {
+        SetNeighBorChunk();
+        chunksVertices.Clear();
+        chunksTriangles.Clear();
+        for (int x = 0; x < chunkSize; x++)
+        {
+            for (int z = 0; z < chunkSize; z++)
+            {
+                for (int y = 0; y < chunkHeight; y++)
+                {
+                    Vector3Int _blockPos = new Vector3Int(x, y, z);
+                    GetAllNeighBorBlock(_blockPos, out blocks[x, y, z].neighborBlockData);
+                    MakeCube(_blockPos);
                 }
             }
         }
+        RenderMesh();
+        yield break;
     }
-    public IEnumerator MakeMesh()
+    public void UpdateMesh()
     {
-        vertices.Clear();
-        triangle.Clear();
+        chunksVertices.Clear();
+        chunksTriangles.Clear();
         for (int x = 0; x < chunkSize; x++)
         {
             for (int z = 0; z < chunkSize; z++)
@@ -112,102 +162,210 @@ public class Chunk : MonoBehaviour
             }
         }
         RenderMesh();
-        yield break;
+    }
+
+    public void DestroyBlock(Vector3Int _pos)
+    {
+        BlockData _blockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(_pos);
+        if (_blockData == null) return;
+        _blockData.blockType = BlockType.Air;
+        onDebug = true;
+        ChangeMesh(_blockData);
+    }
+    public void ChangeMesh(BlockData _blockData)
+    {
+        if (!_blockData) return;
+        BlockData[] _neighbor = _blockData.neighborBlockData;
+        List<Chunk> _toUpdate = new List<Chunk>();
+        _toUpdate.Add(this);
+        foreach (BlockData _blockDataNeighbor in _neighbor)
+        {
+            if (!_blockDataNeighbor || _blockDataNeighbor.blockType == BlockType.Air) continue;
+            Vector3 _blockNeighborPos = _blockDataNeighbor.position;
+            Vector3 _directionToPutVertices = (_blockNeighborPos - _blockData.position).normalized * (_blockDataNeighbor.owner == this ? 1 : -1);
+            Vector3 _directionFace = _directionToPutVertices * 0.5f;
+            bool _upVector = Vector3.up == _directionToPutVertices || Vector3.down == _directionToPutVertices;
+            Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
+            Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * 0.5f;
+            Vector3 _facePos = _directionFace + _blockData.position;
+            Chunk _owner = _blockDataNeighbor.owner;
+            if(!_toUpdate.Contains(_owner))
+            {
+                blockDebug = _blockDataNeighbor;
+                _toUpdate.Add(_owner);
+            }
+            _directionToPutVertices = (_owner == this ? new Vector3(0, 0, 0) : -chunkSize * _directionToPutVertices);
+            _owner.chunksVertices.Add(_directionToPutVertices + _facePos + _directionUp + _directionRight);
+            _owner.chunksVertices.Add(_directionToPutVertices + _facePos + _directionUp - _directionRight);
+            _owner.chunksVertices.Add(_directionToPutVertices + _facePos - _directionUp + _directionRight);
+            _owner.chunksVertices.Add(_directionToPutVertices + _facePos - _directionUp - _directionRight);
+            int _countVertices = _owner.chunksVertices.Count;
+            _owner.chunksTriangles.Add(_countVertices - 2);
+            _owner.chunksTriangles.Add(_countVertices - 3);
+            _owner.chunksTriangles.Add(_countVertices - 4);
+
+            _owner.chunksTriangles.Add(_countVertices - 2);
+            _owner.chunksTriangles.Add(_countVertices - 1);
+            _owner.chunksTriangles.Add(_countVertices - 3);
+
+            _blockDataNeighbor.placementTriangles.Add(_owner.chunksTriangles.Count - 6);
+            _blockDataNeighbor.placementVertices.Add(_countVertices - 4);
+        }
+        ResetVerticesAndTriangleInBlockData(_blockData);
+        for (int i = 0; i < _toUpdate.Count; i++)
+            _toUpdate[i].UpdateVertices();
+    }
+    public void ResetVerticesAndTriangleInBlockData(BlockData _blockData)
+    {
+        int _count = _blockData.placementTriangles.Count;
+        for (int i = 0; i < _count; i++)
+        {
+            int _triangle = _blockData.placementTriangles[i];
+            for (int j = 0; j < 6; j++)
+            {
+                chunksVertices[chunksTriangles[j + _triangle]] = new Vector3(0, 0, 0);
+                chunksTriangles[j + _triangle] = 0;
+            }
+        }
+    }
+    void UpdateVertices()
+    {
+        chunkMesh.vertices = chunksVertices.ToArray();
+        chunkMesh.triangles = chunksTriangles.ToArray();
+        chunkMesh.SetUVs(0, uvs);
+        chunkMesh.RecalculateNormals();
+        meshCollider.sharedMesh = chunkMesh;
+    }
+    public void DestroyBlockProfondeur(Vector3Int _pos, float _radius)
+    {
+        List<Chunk> _toUpdate = new List<Chunk>();
+        _toUpdate.Add(this);
+        int radiusRound = Mathf.RoundToInt(_radius);
+        for (int x = -radiusRound; x < radiusRound; x++)
+        {
+            for (int z = -radiusRound; z < radiusRound; z++)
+            {
+                for (int y = -radiusRound; y < radiusRound; y++)
+                {
+                    Vector3Int _posBlock = new Vector3Int(_pos.x + x, _pos.y + y, _pos.z + z);
+                    if ((_pos - _posBlock).sqrMagnitude >= _radius * _radius) continue;
+                    if (IsBlockInChunk(_posBlock))
+                    {
+                        BlockData _blockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(_posBlock);
+                        if (!_blockData) continue;
+                        _blockData.blockType = BlockType.Air;
+                    }
+                    else
+                    {
+                        BlockData _blockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(_posBlock);
+                        if (!_blockData) continue;
+                        _blockData.blockType = BlockType.Air;
+                        if(!_toUpdate.Contains(_blockData.owner))
+                            _toUpdate.Add(_blockData.owner);
+                    }
+                }
+            }
+        }
+        foreach (var item in diagonalDirection)
+        {
+            Chunk _neighbor = neighborChunk[item];
+            if (_neighbor && !_toUpdate.Contains(_neighbor))
+                _toUpdate.Add(_neighbor);
+        }
+        for (int i = 0; i < _toUpdate.Count; i++)
+            _toUpdate[i].UpdateMesh();
+    }
+    public bool IsBlockInChunk(Vector3Int _pos)
+    {
+        return (_pos.x < blocks.GetLength(0) && _pos.x >= 0) &&
+               (_pos.y < blocks.GetLength(1) && _pos.y >= 0) &&
+               (_pos.z < blocks.GetLength(2) && _pos.z >= 0);
     }
     void RenderMesh()
     {
         chunkMesh = new Mesh();
-        chunkMesh.vertices = vertices.ToArray();
-        chunkMesh.triangles = triangle.ToArray();
+        chunkMesh.vertices = chunksVertices.ToArray();
+        chunkMesh.triangles = chunksTriangles.ToArray();
         chunkMesh.SetUVs(0, uvs);
         chunkMesh.RecalculateNormals();
-        GetComponent<MeshFilter>().mesh = chunkMesh;
-        GetComponent<MeshCollider>().sharedMesh = chunkMesh;
+        meshFilter.mesh = chunkMesh;
+        meshCollider.sharedMesh = chunkMesh;
     }
-    void MakeCube(Vector3Int _blockPos)
+    void MakeCube(Vector3Int _pos)
     {
-        Vector3Int[] directionToFill = IsBlockFill(_blockPos);
-        if (directionToFill.Length != 0 && blocks[_blockPos.x, _blockPos.y, _blockPos.z] != BlockType.Air)
+        BlockData currentBlock = blocks[_pos.x, _pos.y, _pos.z];
+        if (currentBlock.blockType == BlockType.Air) return;
+        BlockData[] _neighbor = currentBlock.neighborBlockData;
+        foreach (BlockData _blockData in _neighbor)
         {
-            foreach (Vector3 _dir in directionToFill)
-            {
-                bool _upVector = Vector3.up == _dir || Vector3.down == _dir;
-                Vector3 _directionFace = _dir * 0.5f;
-                Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
-                Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * 0.5f;
-                Vector3 _facePos = _blockPos + _directionFace;
+            if (_blockData.blockType != BlockType.Air) continue;
+            Vector3 _blockPos = _blockData.position;
+            Vector3 _direction = (_blockPos - currentBlock.position).normalized * (_blockData.owner == this ? 1 : -1);
+            Vector3 _directionFace = _direction * 0.5f;
+            bool _upVector = Vector3.up == _direction || Vector3.down == _direction;
+            Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
+            Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * 0.5f;
+            Vector3 _facePos = _directionFace + _pos;
 
-                vertices.Add(_facePos + _directionUp + _directionRight);
-                vertices.Add(_facePos + _directionUp - _directionRight);
-                vertices.Add(_facePos - _directionUp + _directionRight);
-                vertices.Add(_facePos - _directionUp - _directionRight);
+            chunksVertices.Add(_facePos + _directionUp + _directionRight);
+            chunksVertices.Add(_facePos + _directionUp - _directionRight);
+            chunksVertices.Add(_facePos - _directionUp + _directionRight);
+            chunksVertices.Add(_facePos - _directionUp - _directionRight);
 
-                triangle.Add(vertices.Count - 4);
-                triangle.Add(vertices.Count - 3);
-                triangle.Add(vertices.Count - 2);
+            chunksTriangles.Add(chunksVertices.Count - 4);
+            chunksTriangles.Add(chunksVertices.Count - 3);
+            chunksTriangles.Add(chunksVertices.Count - 2);
 
-                triangle.Add(vertices.Count - 3);
-                triangle.Add(vertices.Count - 1);
-                triangle.Add(vertices.Count - 2);
-            }
+            chunksTriangles.Add(chunksVertices.Count - 3);
+            chunksTriangles.Add(chunksVertices.Count - 1);
+            chunksTriangles.Add(chunksVertices.Count - 2);
+            currentBlock.placementTriangles.Add(chunksTriangles.Count - 6);
+            currentBlock.placementVertices.Add(chunksVertices.Count - 4);
         }
     }
-    bool IsPositionInChunk(Vector3Int _position)
+    void GetAllNeighBorBlock(Vector3Int _blockPos, out BlockData[] _blockDatas)
     {
-        if(_position.z < 0 || _position.z >= chunkSize)
-            return false;
-        if(_position.x < 0 || _position.x >= chunkSize)
-            return false;
-        if(_position.y < 0 || _position.y >= chunkHeight)
-            return false;
-        return true;
-    }
-    Vector3Int[] IsBlockFill(Vector3Int _pos)
-    {
-        List<Vector3Int> _directionFill = new List<Vector3Int>();
-        foreach (Vector3Int _dir in direction)
+        List<BlockData> _tempBlockDatas = new List<BlockData>();
+        foreach (Vector3Int dir in allDirection)
         {
-            Vector3Int _posDir = _pos + _dir;
-            if (IsPositionInChunk(_posDir))
+            Vector3Int _blockSidePos = _blockPos + dir;
+            if(IsBlockInChunk(_blockSidePos))
+                _tempBlockDatas.Add(blocks[_blockSidePos.x, _blockSidePos.y, _blockSidePos.z]);
+            else if(dir != Vector3Int.up && dir != Vector3Int.down)
             {
-                if (blocks[_posDir.x, _posDir.y, _posDir.z] == BlockType.Air || blocks[_posDir.x, _posDir.y, _posDir.z] == BlockType.Water)
-                    _directionFill.Add(_dir);
-            }
-            else if (_dir != Vector3.up && _dir != Vector3.down)
-            {
-                Vector3 _posCube = transform.position / 16 + _dir;
-                Chunk _chunkNeighbor = ChunkManager.Instance.GetChunk((int)_posCube.x, (int)_posCube.z);
-                if (!_chunkNeighbor) continue;
-                if(!chunkNeighbor.Contains(_chunkNeighbor))
-                    chunkNeighbor.Add(_chunkNeighbor);
-                Vector3Int _cal = _pos - new Vector3Int((chunkSize - 1) * _dir.x, 0, (chunkSize - 1) * _dir.z);
-                if (_cal.x >= 0 && _cal.x < _chunkNeighbor.blocks.GetLength(0) && _cal.z >= 0 && _cal.z < _chunkNeighbor.blocks.GetLength(2))
-                    if (_chunkNeighbor.blocks[_cal.x, _cal.y, _cal.z] == BlockType.Air)
-                    {
-                        _directionFill.Add(_dir);
-                    }
+                Vector3Int _blockNeightBor = _blockPos - new Vector3Int((chunkSize - 1) * dir.x, 0, (chunkSize - 1) * dir.z);
+                Chunk _neighbor = neighborChunk[dir];
+                if (!_neighbor) continue;
+                _tempBlockDatas.Add(_neighbor.blocks[_blockNeightBor.x, _blockNeightBor.y, _blockNeightBor.z]);
             }
         }
-        return _directionFill.ToArray();
+        _blockDatas = _tempBlockDatas.ToArray();
+    }
+
+    public Vector3Int GetPositionBlockFromWorldPosition(Vector3 _pos, Vector3 _normal)
+    {
+        Vector3 _posNormal = _pos - _normal * 0.5f;
+        return new Vector3Int(Mathf.RoundToInt(_posNormal.x), Mathf.RoundToInt(_posNormal.y), Mathf.RoundToInt(_posNormal.z));
+    }
+    public Vector3Int GetPositionBlockInChunkFromClampPosition(Vector3Int _pos)
+    {
+        return _pos - new Vector3Int(chunksIndex.x * (chunkSize), 0, chunksIndex.y * (chunkSize));
     }
     private void OnDrawGizmosSelected()
     {
-        if (!drawNeighBorGizmo) return;
-        int _count = chunkNeighbor.Count;
-        Gizmos.color = Color.red;
-        Vector3 _offset = Vector3.up * 2;
-        for (int i = 0; i < _count; i++)
-        {
-            Chunk _chunk = chunkNeighbor[i];
-            Gizmos.DrawMesh(_chunk.chunkMesh, 0, _chunk.transform.position + _offset);
-        }
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireMesh(chunkMesh,0,transform.position);
     }
     private void OnDrawGizmos()
     {
-        if (!drawVerticesGizmo) return;
-        int _count = vertices.Count;
-        Gizmos.color = Color.yellow;
-        for (int i = 0; i < _count; i++)
-            Gizmos.DrawCube(vertices[i], Vector3.one);
+        Gizmos.color = Color.red;
+        if (!onDebug || blockDebug == null) return;
+        //for (int i = 0; i < blockDebug.placementTriangles.Count; i++) 
+        //{
+        //    for (int j = 0; j < 6; j++)
+        //    {
+        //        Gizmos.DrawCube(transform.position + blockDebug.owner.chunksVertices[blockDebug.owner.chunksTriangles[j + blockDebug.placementTriangles[i]]] ,Vector3.one * 0.05f);
+        //    }
+        //}
     }
 }
