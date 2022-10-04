@@ -76,8 +76,8 @@ public class ChunkUpgrade : MonoBehaviour
     int chunkSize = 8;
     int waterThreshold = 20;
 
-    BlockData blockDebug;
     [SerializeField] private bool onDebug;
+    private BlockData blockDebug;
 
     public IEnumerator Init(float _noiseScale, int _chunkSize, int _chunckHeight)
     {
@@ -169,9 +169,70 @@ public class ChunkUpgrade : MonoBehaviour
         BlockData _blockData = ChunkManagerUpgrade.Instance.GetBlockDataFromWorldPosition(_pos);
         if (_blockData == null) return;
         _blockData.blockType = BlockType.Air;
-        Debug.Log(_blockData.placementTriangles + " " + _blockData.placementVertices);
-        blockDebug = _blockData;
+        //Debug.Log(_blockData.placementTriangles + " " + _blockData.placementVertices);
+        //blockDebug = _blockData;
         onDebug = true;
+        ChangeMesh(_blockData);
+    }
+    public void ChangeMesh(BlockData _blockData)
+    {
+        BlockData[] _neighbor = _blockData.neighborBlockData;
+        List<ChunkUpgrade> _toUpdate = new List<ChunkUpgrade>();
+        _toUpdate.Add(this);
+        foreach (BlockData _blockDataNext in _neighbor)
+        {
+            if (_blockDataNext.blockType == BlockType.Air) continue;
+            Vector3 _blockPos = _blockDataNext.position;
+            Vector3 _direction = (_blockPos - _blockData.position).normalized * (_blockDataNext.owner == this ? 1 : -1);
+            Vector3 _directionFace = _direction * 0.5f;
+            bool _upVector = Vector3.up == _direction || Vector3.down == _direction;
+            Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
+            Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * 0.5f;
+            Vector3 _facePos = _directionFace + _blockData.position;
+
+            if(!_toUpdate.Contains(_blockDataNext.owner))
+            {
+                blockDebug = _blockDataNext;
+                _toUpdate.Add(_blockDataNext.owner);
+            }
+
+            _blockDataNext.owner.chunksVertices.Add((_blockDataNext.owner == this ? new Vector3(0, 0, 0) : -1 * _blockDataNext.owner.transform.position) + _facePos + _directionUp + _directionRight);
+            _blockDataNext.owner.chunksVertices.Add((_blockDataNext.owner == this ? new Vector3(0, 0, 0) : -1 * _blockDataNext.owner.transform.position) + _facePos + _directionUp - _directionRight);
+            _blockDataNext.owner.chunksVertices.Add((_blockDataNext.owner == this ? new Vector3(0, 0, 0) : -1 * _blockDataNext.owner.transform.position) + _facePos - _directionUp + _directionRight);
+            _blockDataNext.owner.chunksVertices.Add((_blockDataNext.owner == this ? new Vector3(0, 0, 0) : -1 * _blockDataNext.owner.transform.position) + _facePos - _directionUp - _directionRight);
+
+            _blockDataNext.owner.chunksTriangles.Add(_blockDataNext.owner.chunksVertices.Count - 2);
+            _blockDataNext.owner.chunksTriangles.Add(_blockDataNext.owner.chunksVertices.Count - 3);
+            _blockDataNext.owner.chunksTriangles.Add(_blockDataNext.owner.chunksVertices.Count - 4);
+
+            _blockDataNext.owner.chunksTriangles.Add(_blockDataNext.owner.chunksVertices.Count - 2);
+            _blockDataNext.owner.chunksTriangles.Add(_blockDataNext.owner.chunksVertices.Count - 1);
+            _blockDataNext.owner.chunksTriangles.Add(_blockDataNext.owner.chunksVertices.Count - 3);
+
+            _blockDataNext.placementTriangles.Add(_blockDataNext.owner.chunksTriangles.Count - 6);
+            _blockDataNext.placementVertices.Add(_blockDataNext.owner.chunksVertices.Count - 4);
+        }
+        for (int i = 0; i < _blockData.placementTriangles.Count; i++)
+        {
+            for (int j = 0; j < 6; j++)
+            {
+                chunksVertices[chunksTriangles[j + _blockData.placementTriangles[i]]] = new Vector3(0,0,0);
+                chunksTriangles[j + _blockData.placementTriangles[i]] = 0;
+            }
+        }
+        for (int i = 0; i < _toUpdate.Count; i++)
+        {
+            Debug.Log(_toUpdate[i]);
+            _toUpdate[i].UpdateVertices();
+        }
+    }
+    void UpdateVertices()
+    {
+        chunkMesh.vertices = chunksVertices.ToArray();
+        chunkMesh.triangles = chunksTriangles.ToArray();
+        chunkMesh.SetUVs(0, uvs);
+        chunkMesh.RecalculateNormals();
+        meshCollider.sharedMesh = chunkMesh;
     }
     public void DestroyBlockProfondeur(Vector3Int _pos, float _radius)
     {
@@ -260,7 +321,6 @@ public class ChunkUpgrade : MonoBehaviour
             chunksTriangles.Add(chunksVertices.Count - 2);
             currentBlock.placementTriangles.Add(chunksTriangles.Count - 6);
             currentBlock.placementVertices.Add(chunksVertices.Count - 4);
-
         }
     }
     void GetAllNeighBorBlock(Vector3Int _blockPos, out BlockData[] _blockDatas)
@@ -299,12 +359,12 @@ public class ChunkUpgrade : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        if (!onDebug) return;
+        if (!onDebug || blockDebug == null) return;
         for (int i = 0; i < blockDebug.placementTriangles.Count; i++) 
         {
             for (int j = 0; j < 6; j++)
             {
-                Gizmos.DrawCube(transform.position + chunksVertices[chunksTriangles[j + blockDebug.placementTriangles[i]]] ,Vector3.one * 0.05f);
+                Gizmos.DrawCube(transform.position + blockDebug.owner.chunksVertices[blockDebug.owner.chunksTriangles[j + blockDebug.placementTriangles[i]]] ,Vector3.one * 0.05f);
             }
         }
     }
