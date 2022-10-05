@@ -29,6 +29,10 @@ public class ChunkManager : MonoBehaviour
         }
         instance = this;
     }
+    private IEnumerator Start()
+    {
+        yield return GenerateMap();
+    }
     public BlockData GetBlockDataFromWorldPosition(Vector3Int _posBlock)
     {
         Vector2Int _chunkPosBlock = GetChunkIndexFromWorldPosition(_posBlock);
@@ -44,12 +48,9 @@ public class ChunkManager : MonoBehaviour
             return chunks[_x,_z];
         return null;
     }
+    public Chunk GetChunk(Vector2Int _chunkIndex) => GetChunk(_chunkIndex.x, _chunkIndex.y);
     public bool IsCoordInChunk(int _x,int _z) => _x < chunks.GetLength(0) && _z < chunks.GetLength(1) && _x >= 0 && _z >= 0;
     public Vector2Int GetChunkIndexFromWorldPosition(Vector3 _pos) => new Vector2Int((int)_pos.x / chunkSize, (int)_pos.z / chunkSize);
-    private IEnumerator Start()
-    {
-        yield return GenerateMap();
-    }
     private IEnumerator GenerateMap()
     {
         noisePosX = UnityEngine.Random.Range(0, 10000);
@@ -69,9 +70,9 @@ public class ChunkManager : MonoBehaviour
     public IEnumerator CreateChunks(int _sizeX,int _sizeY)
     {
         chunks = new Chunk[_sizeX, _sizeY];
-        for (int i = 0; i < _sizeX; i++)
+        for (int i = 0; i < _sizeX; ++i)
         {
-            for (int j = 0; j < _sizeY; j++)
+            for (int j = 0; j < _sizeY; ++j)
             {
                 Chunk myChunk = Instantiate<Chunk>(chunkPrefab, new Vector3(i * chunkSize, 0, j * chunkSize), Quaternion.identity, transform);
                 yield return myChunk.Init(noiseScale, chunkSize, chunkHeight);
@@ -82,8 +83,8 @@ public class ChunkManager : MonoBehaviour
     }
     public IEnumerator UpdateChunk()
     {
-        for (int x = 0; x < chunksAmountX; x++)
-            for (int z = 0; z < chunksAmountZ; z++)
+        for (int x = 0; x < chunksAmountX; ++x)
+            for (int z = 0; z < chunksAmountZ; ++z)
                 yield return chunks[x, z].SetMakeMesh();
     }
 }

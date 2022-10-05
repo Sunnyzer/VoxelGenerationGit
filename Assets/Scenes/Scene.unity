@@ -186,13 +186,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b374d7805a2619a42ade220ff2d69b75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  noiseScale: 0.003
+  noiseScale: 0.0015
   chunkSize: 16
-  chunkHeight: 100
-  chunksAmountX: 4
-  chunksAmountZ: 4
+  chunkHeight: 200
+  chunksAmountX: 8
+  chunksAmountZ: 8
   chunkPrefab: {fileID: 5253146693293591295, guid: 53f1480f834a81748af0005501e20b97, type: 3}
-  onDebug: 0
+  onDebug: 1
 --- !u!1001 &291300143
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -271,6 +271,10 @@ PrefabInstance:
     - target: {fileID: 8077752294491074753, guid: 0cc54ef08de21404ba386c7b4e0a50c4, type: 3}
       propertyPath: radius
       value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 8077752294491074753, guid: 0cc54ef08de21404ba386c7b4e0a50c4, type: 3}
+      propertyPath: cooldownBreakMax
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074753, guid: 0cc54ef08de21404ba386c7b4e0a50c4, type: 3}
       propertyPath: sizeFeetDetection

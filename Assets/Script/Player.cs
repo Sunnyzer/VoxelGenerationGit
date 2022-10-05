@@ -21,6 +21,10 @@ public class Player : MonoBehaviour
     Vector3 rightOrientation;
     Vector3Int pointCube;
     bool isGrounded = false;
+    bool isPressedRight = false;
+    bool isPressedLeft = false;
+    float cooldownBreak;
+    [SerializeField]float cooldownBreakMax;
     private void Start()
     {
         float tempGravityScale = gravityScale;
@@ -47,13 +51,25 @@ public class Player : MonoBehaviour
         Chunk _chunk = _raycastHit.collider.GetComponent<Chunk>();
         if (!_chunk) return;
         pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
+
         if (Input.GetMouseButtonDown(0))
+            isPressedLeft = true;
+        if (Input.GetMouseButtonUp(0))
+            isPressedLeft = false;
+
+        if (Input.GetMouseButton(1))
+            isPressedRight = true;
+        if (Input.GetMouseButtonUp(1))
+            isPressedRight = false;
+
+        cooldownBreak += Time.deltaTime;
+        if (cooldownBreak >= cooldownBreakMax)
         {
-            _chunk.DestroyBlockProfondeur(pointCube, radius);
-        }
-        if (Input.GetMouseButtonDown(1))
-        {
-            _chunk.DestroyBlock(pointCube);
+            if (Input.GetMouseButton(0))
+                _chunk.DestroyBlockProfondeur(pointCube, radius);
+            if (Input.GetMouseButton(1))
+                _chunk.DestroyBlock(pointCube);
+            cooldownBreak = 0;
         }
     }
     private void OnDrawGizmos()
