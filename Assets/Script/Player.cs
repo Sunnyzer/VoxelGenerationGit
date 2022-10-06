@@ -28,8 +28,8 @@ public class Player : MonoBehaviour
     private void Start()
     {
         float tempGravityScale = gravityScale;
-        gravityScale = 0;
-        ChunkManager.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
+        //gravityScale = 0;
+        //ChunkManager.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
     }
     private void Update()
     {

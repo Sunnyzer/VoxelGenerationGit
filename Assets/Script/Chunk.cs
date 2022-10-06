@@ -21,6 +21,11 @@ public class BlockData
     public static bool operator! (BlockData _a) => _a == null;
 }
 
+class FaceVertices
+{
+    Vector3[] vertices = new Vector3[4];
+    int[] triangles = new int[6];
+}
 public class Chunk : MonoBehaviour
 {
     public static List<Vector3Int> diagonalDirection = new List<Vector3Int>()
@@ -77,9 +82,11 @@ public class Chunk : MonoBehaviour
     int chunkSize = 8;
     int waterThreshold = 20;
 
+    List<BlockData> _blockDatas = new List<BlockData>();
+
     [SerializeField] private bool onDebug;
     private BlockData blockDebug;
-
+    Dictionary<Vector3Int, FaceVertices> dir;
     public IEnumerator Init(float _noiseScale, int _chunkSize, int _chunckHeight)
     {
         noiseScale = _noiseScale;
@@ -112,6 +119,8 @@ public class Chunk : MonoBehaviour
                         voxelType = BlockType.Grass_Dirt;
                     }
                     blocks[x, y, z] = new BlockData(voxelType, new Vector3Int(x, y, z), this);
+                    if (voxelType == BlockType.Grass_Dirt)
+                        _blockDatas.Add(blocks[x, y, z]);
                 }
             }
             yield return null;
