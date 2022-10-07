@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [Serializable]
@@ -16,37 +17,23 @@ public class Block
     };
     public Vector3Int positionBlock;
     public BlockType blockType = BlockType.Dirt;
-    public List<Block> blocks = new List<Block>();
     public Dictionary<Vector3Int, Block> blocksNeighbor = new Dictionary<Vector3Int, Block>();
-    public Dictionary<Vector3Int, Face> allFace = new Dictionary<Vector3Int, Face>();
-    public Dictionary<Vector3, int> allVertices = new Dictionary<Vector3, int>();
+    public Dictionary<Vector3Int, Face> facePerDirection = new Dictionary<Vector3Int, Face>();
     public Block(Vector3Int _position,BlockType _blockType)
     {
         blockType = _blockType;
         positionBlock = _position;
     }
     public void SetNeighbor(TestRendererCube _renderCube)
-    {
-        int index = 0;
+    { 
         foreach (Vector3Int _direction in allDirection)
         {
             Vector3Int _posNeighbor = positionBlock + _direction;
             if (_renderCube.IsBlockInBlocks(_posNeighbor))
             {
                 blocksNeighbor.Add(_direction, _renderCube.blocks[_posNeighbor.x, _posNeighbor.y, _posNeighbor.z]);
-                blocks.Add(blocksNeighbor[_direction]);
             }
-            index++;
         }
-    }
-    public bool AddVertices(Vector3 _verticePos, int verticeIndex)
-    {
-        if (!allVertices.ContainsKey(_verticePos))
-        {
-            allVertices.Add(_verticePos, verticeIndex);
-            return true;
-        }
-        return false;
     }
 }
 public class Face
@@ -72,25 +59,88 @@ public class TestRendererCube : MonoBehaviour
     public Block[,,] blocks;
     [SerializeField] bool debugBlock = false;
     [SerializeField] Block block;
+    Dictionary<Vector3, int> verticesIndex = new Dictionary<Vector3, int>(); 
+    List<Block> blockRender = new List<Block>(); 
     private void Start() => Init();
     public void Init()
     {
-        blocks = new Block[1, 6, 1];
-        RunThroughAllBlocks(GenerateBlocks);
+        blocks = new Block[16, 100, 16];
+        GenerateBlocks();
         RunThroughAllBlocks((_posBlock) => { blocks[_posBlock.x, _posBlock.y, _posBlock.z].SetNeighbor(this); });
         RunThroughAllBlocks((_posBlock) => { SetFace(blocks[_posBlock.x, _posBlock.y, _posBlock.z]); });
-        block = blocks[0, 2, 0];
+        block = blocks[0, 5, 0];
         RenderMesh();
     }
-    void GenerateBlocks(Vector3Int _posBlock)
+    void GenerateBlocks()
     {
-        if (_posBlock.y > 2)
-            blocks[_posBlock.x, _posBlock.y, _posBlock.z] = new Block(_posBlock, BlockType.Air);
-        else
-            blocks[_posBlock.x, _posBlock.y, _posBlock.z] = new Block(_posBlock, BlockType.Dirt);
+        for (int x = 0; x < 16; x++)
+        {
+            for (int z = 0; z < 16; z++)
+            {
+                float noiseValue = Mathf.PerlinNoise((ChunkManager.noisePosX + transform.position.x + x) * 0.0005f, (ChunkManager.noisePosY + transform.position.z + z) * 0.0005f);
+                int groundPosition = Mathf.RoundToInt(noiseValue * 100);
+                BlockType voxelType = BlockType.Dirt;
+                for (int y = 0; y < 100; y++)
+                {
+                    if (y > groundPosition)
+                    {
+                        voxelType = BlockType.Air;
+                    }
+                    else if (y == groundPosition)
+                    {
+                        voxelType = BlockType.Grass_Dirt;
+                    }
+                    blocks[x, y, z] = new Block(new Vector3Int(x, y, z), voxelType);
+                }
+            }
+        }
+    }
+    void UpdateBlockToDestroy(Block _toDestroy)
+    {
+        _toDestroy.blockType = BlockType.Air;
+        blockRender.Remove(_toDestroy);
+        _toDestroy.facePerDirection.Clear();
+
+        foreach (var item in _toDestroy.blocksNeighbor)
+            AddFace(item.Value, _toDestroy, -item.Key);
+    }
+    public void DestroyMultiBlock(Vector3 _pos, Vector3 _normal, int _radius)
+    {
+        Vector3Int _posBlock = GetBlockInChunkFromWorldLocationAndNormal(_pos, _normal);
+        for (int x = -_radius; x < _radius; ++x)
+            for (int z = -_radius; z < _radius; ++z)
+                for (int y = -_radius; y < _radius; ++y)
+                {
+                    Vector3Int _blockPosToDestroy = _posBlock + new Vector3Int(x, y, z);
+                    if(IsBlockInBlocks(_blockPosToDestroy))
+                        UpdateBlockToDestroy(blocks[_blockPosToDestroy.x, _blockPosToDestroy.y, _blockPosToDestroy.z]);
+                }
+        ResetVerticesAndTriangles();
+        RenderMesh();
+    }
+    public void DestroyBlock(Vector3Int _posInChunk)
+    {
+        Block _block = blocks[_posInChunk.x, _posInChunk.y, _posInChunk.z];
+        UpdateBlockToDestroy(_block);
+        ResetVerticesAndTriangles();
+        RenderMesh();
+    }
+    public void DestroyBlock(Vector3 _pos, Vector3 _normal)
+    {
+        Vector3Int _posBlock = GetBlockInChunkFromWorldLocationAndNormal(_pos, _normal);
+        if (!IsBlockInBlocks(_posBlock)) return;
+        DestroyBlock(_posBlock);
+    }
+    public Vector3Int GetBlockInChunkFromWorldLocationAndNormal(Vector3 _pos, Vector3 _normal)
+    {
+        Vector3 _posNormal = _pos - _normal * 0.5f;
+        Vector3Int _posBlockInBlock = new Vector3Int(Mathf.RoundToInt(_posNormal.x), Mathf.RoundToInt(_posNormal.y), Mathf.RoundToInt(_posNormal.z));
+        Vector3 _posBlock = _posBlockInBlock - transform.position;
+        return new Vector3Int(Mathf.RoundToInt(_posBlock.x), Mathf.RoundToInt(_posBlock.y), Mathf.RoundToInt(_posBlock.z));
     }
     void SetFace(Block _block)
     {
+        if (_block.blockType == BlockType.Air) return;
         foreach (var item in _block.blocksNeighbor)
         {
             if (item.Value.blockType == BlockType.Air)
@@ -105,43 +155,100 @@ public class TestRendererCube : MonoBehaviour
                 Vector3 _facePos = _block.positionBlock + _directionFace;
 
                 Vector3 _verticePosUpRight = _facePos + _directionUp + _directionRight;
-                bool _succeedToAddVertice = AddVerticeToBlock(_verticePosUpRight, _block);
+                bool _succeedToAddVertice = AddVerticeToBlock(_verticePosUpRight);
                 _verticesTemp.Add(_verticePosUpRight);
 
                 Vector3 _verticePosUpLeft = _facePos + _directionUp - _directionRight;
-                _succeedToAddVertice = AddVerticeToBlock(_verticePosUpLeft, _block);
+                _succeedToAddVertice = AddVerticeToBlock(_verticePosUpLeft);
                 _verticesTemp.Add(_verticePosUpLeft);
 
                 Vector3 _verticePosDownRight = _facePos - _directionUp + _directionRight;
-                _succeedToAddVertice = AddVerticeToBlock(_verticePosDownRight, _block);
+                _succeedToAddVertice = AddVerticeToBlock(_verticePosDownRight);
                 _verticesTemp.Add(_verticePosDownRight);
 
                 Vector3 _verticePosDownLeft = _facePos - _directionUp - _directionRight;
-                _succeedToAddVertice = AddVerticeToBlock(_verticePosDownLeft, _block);
+                _succeedToAddVertice = AddVerticeToBlock(_verticePosDownLeft);
                 _verticesTemp.Add(_verticePosDownLeft);
 
-                triangles.Add(_block.allVertices[_verticePosUpRight]);
-                triangles.Add(_block.allVertices[_verticePosUpLeft]);
-                triangles.Add(_block.allVertices[_verticePosDownRight]);
+                triangles.Add(verticesIndex[_verticePosUpRight]);
+                triangles.Add(verticesIndex[_verticePosUpLeft]);
+                triangles.Add(verticesIndex[_verticePosDownRight]);
 
-                triangles.Add(_block.allVertices[_verticePosUpLeft]);
-                triangles.Add(_block.allVertices[_verticePosDownLeft]);
-                triangles.Add(_block.allVertices[_verticePosDownRight]);
+                triangles.Add(verticesIndex[_verticePosUpLeft]);
+                triangles.Add(verticesIndex[_verticePosDownLeft]);
+                triangles.Add(verticesIndex[_verticePosDownRight]);
 
-                _trianglesTemp.Add(_block.allVertices[_verticePosUpRight]);
-                _trianglesTemp.Add(_block.allVertices[_verticePosUpLeft]);
-                _trianglesTemp.Add(_block.allVertices[_verticePosDownRight]);
+                _trianglesTemp.Add(verticesIndex[_verticePosUpRight]);
+                _trianglesTemp.Add(verticesIndex[_verticePosUpLeft]);
+                _trianglesTemp.Add(verticesIndex[_verticePosDownRight]);
 
-                _trianglesTemp.Add(_block.allVertices[_verticePosUpLeft]);
-                _trianglesTemp.Add(_block.allVertices[_verticePosDownLeft]);
-                _trianglesTemp.Add(_block.allVertices[_verticePosDownRight]);
-                _block.allFace.Add(item.Key, new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
+                _trianglesTemp.Add(verticesIndex[_verticePosUpLeft]);
+                _trianglesTemp.Add(verticesIndex[_verticePosDownLeft]);
+                _trianglesTemp.Add(verticesIndex[_verticePosDownRight]);
+                
+                _block.facePerDirection.Add(item.Key, new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
+                if(!blockRender.Contains(_block))
+                    blockRender.Add(_block);
             }
         }
     }
-    public bool AddVerticeToBlock(Vector3 _verticePos,Block _block)
+    void AddFace(Block _block, Block _blockDestroy, Vector3Int _direction)
     {
-        bool _succeedToAddVertice = _block.AddVertices(_verticePos, vertices.Count);
+        if (_block.blockType == BlockType.Air || _blockDestroy.blockType != BlockType.Air) return;
+        List<int> _trianglesTemp = new List<int>();
+        List<Vector3> _verticesTemp = new List<Vector3>();
+        Vector3 _directionFace = new Vector3(_direction.x, _direction.y, _direction.z) * 0.5f;
+        bool _upVector = Vector3Int.up == _direction || Vector3Int.down == _direction;
+        Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
+        Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * 0.5f;
+        Vector3 _facePos = _block.positionBlock + _directionFace;
+
+        Vector3 _verticePosUpRight = _facePos + _directionUp + _directionRight;
+        bool _succeedToAddVertice = AddVerticeToBlock(_verticePosUpRight);
+        _verticesTemp.Add(_verticePosUpRight);
+
+        Vector3 _verticePosUpLeft = _facePos + _directionUp - _directionRight;
+        _succeedToAddVertice = AddVerticeToBlock(_verticePosUpLeft);
+        _verticesTemp.Add(_verticePosUpLeft);
+
+        Vector3 _verticePosDownRight = _facePos - _directionUp + _directionRight;
+        _succeedToAddVertice = AddVerticeToBlock(_verticePosDownRight);
+        _verticesTemp.Add(_verticePosDownRight);
+
+        Vector3 _verticePosDownLeft = _facePos - _directionUp - _directionRight;
+        _succeedToAddVertice = AddVerticeToBlock(_verticePosDownLeft);
+        _verticesTemp.Add(_verticePosDownLeft);
+
+        _trianglesTemp.Add(verticesIndex[_verticePosUpRight]);
+        _trianglesTemp.Add(verticesIndex[_verticePosUpLeft]);
+        _trianglesTemp.Add(verticesIndex[_verticePosDownRight]);
+
+        _trianglesTemp.Add(verticesIndex[_verticePosUpLeft]);
+        _trianglesTemp.Add(verticesIndex[_verticePosDownLeft]);
+        _trianglesTemp.Add(verticesIndex[_verticePosDownRight]);
+
+        if(!_block.facePerDirection.Keys.Contains(_direction))
+            _block.facePerDirection.Add(_direction, new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
+        else
+            _block.facePerDirection[_direction] = new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray());
+            
+        if (!blockRender.Contains(_block))
+            blockRender.Add(_block);
+    }
+    void ResetVerticesAndTriangles()
+    {
+        triangles.Clear();
+        int _countBlockRender = blockRender.Count;
+        for (int i = 0; i < _countBlockRender; i++)
+        {
+            Dictionary<Vector3Int, Face>.ValueCollection _faces = blockRender[i].facePerDirection.Values; 
+            foreach (var item in _faces)
+                triangles.AddRange(item.triangles);
+        }
+    }
+    public bool AddVerticeToBlock(Vector3 _verticePos)
+    {
+        bool _succeedToAddVertice = verticesIndex.TryAdd(_verticePos, vertices.Count);
         if (_succeedToAddVertice)
             vertices.Add(_verticePos);
         return _succeedToAddVertice;
@@ -167,6 +274,12 @@ public class TestRendererCube : MonoBehaviour
     }
     void RenderMesh()
     {
+        if(vertices.Count == 0 || triangles.Count == 0)
+        {
+            meshFilter.mesh = null;
+            meshCollider.sharedMesh = null;
+            return;
+        }
         blockMesh = new Mesh();
         blockMesh.vertices= vertices.ToArray();
         blockMesh.triangles = triangles.ToArray();
@@ -190,5 +303,7 @@ public class TestRendererCube : MonoBehaviour
         {
             Gizmos.DrawCube(transform.position + vertices[i],Vector3.one * 0.05f);
         }
+        Gizmos.color = Color.black;
+        Gizmos.DrawWireMesh(blockMesh, transform.position);
     }
 }

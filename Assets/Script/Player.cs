@@ -48,9 +48,10 @@ public class Player : MonoBehaviour
         bool _hit = Physics.Raycast(Camera.main.transform.position, orientation.forward, out RaycastHit _raycastHit, 100, groundLayer);
         Debug.DrawRay(Camera.main.transform.position, orientation.forward * 100, Color.red);
         if (!_hit) return;
-        Chunk _chunk = _raycastHit.collider.GetComponent<Chunk>();
+        //Chunk _chunk = _raycastHit.collider.GetComponent<Chunk>();
+        TestRendererCube _chunk = _raycastHit.collider.GetComponent<TestRendererCube>();
         if (!_chunk) return;
-        pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
+        //pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
 
         if (Input.GetMouseButtonDown(0))
             isPressedLeft = true;
@@ -66,9 +67,11 @@ public class Player : MonoBehaviour
         if (cooldownBreak >= cooldownBreakMax)
         {
             if (Input.GetMouseButton(0))
-                _chunk.DestroyBlockProfondeur(pointCube, radius);
+                _chunk.DestroyBlock(_raycastHit.point, _raycastHit.normal);
+            //    _chunk.DestroyBlockProfondeur(pointCube, radius);
             if (Input.GetMouseButton(1))
-                _chunk.DestroyBlock(pointCube);
+                _chunk.DestroyMultiBlock(_raycastHit.point, _raycastHit.normal, radius);
+                //    _chunk.DestroyBlock(pointCube);
             cooldownBreak = 0;
         }
     }
