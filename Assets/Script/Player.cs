@@ -20,6 +20,7 @@ public class Player : MonoBehaviour
     Vector3 forwardOrientation;
     Vector3 rightOrientation;
     Vector3Int pointCube;
+    Vector3 pointPoint;
     bool isGrounded = false;
     bool isPressedRight = false;
     bool isPressedLeft = false;
@@ -47,42 +48,56 @@ public class Player : MonoBehaviour
             rb.velocity = new Vector3(velocity.x, 0, velocity.z);
         bool _hit = Physics.Raycast(Camera.main.transform.position, orientation.forward, out RaycastHit _raycastHit, 100, groundLayer);
         Debug.DrawRay(Camera.main.transform.position, orientation.forward * 100, Color.red);
-        if (!_hit) return;
-        //Chunk _chunk = _raycastHit.collider.GetComponent<Chunk>();
-        TestRendererCube _chunk = _raycastHit.collider.GetComponent<TestRendererCube>();
-        if (!_chunk) return;
-        //pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
-
-        if (Input.GetMouseButtonDown(0))
-            isPressedLeft = true;
-        if (Input.GetMouseButtonUp(0))
-            isPressedLeft = false;
-
-        if (Input.GetMouseButton(1))
-            isPressedRight = true;
-        if (Input.GetMouseButtonUp(1))
-            isPressedRight = false;
-
         cooldownBreak += Time.deltaTime;
-        if (cooldownBreak >= cooldownBreakMax)
+        if (!_hit) return;
+        Chunk _chunk = _raycastHit.collider.GetComponent<Chunk>();
+        TestRendererCube _testRenderer = _raycastHit.collider.GetComponent<TestRendererCube>();
+        MeshChunk _chunkMesh = _raycastHit.collider.GetComponent<MeshChunk>();
+        pointCube = _testRenderer.GetBlockInChunkFromWorldLocationAndNormal(_raycastHit.point, _raycastHit.normal);
+        pointPoint = _raycastHit.point;
+        if (_chunk)
         {
-            if (Input.GetMouseButton(0))
-                _chunk.DestroyBlock(_raycastHit.point, _raycastHit.normal);
-            //    _chunk.DestroyBlockProfondeur(pointCube, radius);
-            if (Input.GetMouseButton(1))
-                _chunk.DestroyMultiBlock(_raycastHit.point, _raycastHit.normal, radius);
-                //    _chunk.DestroyBlock(pointCube);
-            cooldownBreak = 0;
+            if (cooldownBreak >= cooldownBreakMax)
+            {
+                //pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
+                if (Input.GetMouseButton(0))
+                    _chunk.DestroyBlock(pointCube);
+                if (Input.GetMouseButton(1))
+                    _chunk.DestroyBlockProfondeur(pointCube, radius);
+                cooldownBreak = 0;
+            }
+        }
+        else if(_testRenderer)
+        {
+            cooldownBreak += Time.deltaTime;
+            if (cooldownBreak >= cooldownBreakMax)
+            {
+                if (Input.GetMouseButton(0))
+                    _testRenderer.DestroyBlock(_raycastHit.point, _raycastHit.normal);
+                if (Input.GetMouseButton(1))
+                    _testRenderer.DestroyMultiBlock(_raycastHit.point, _raycastHit.normal, radius);
+                cooldownBreak = 0;
+            }
+        }
+        else if (_chunkMesh)
+        {
+            cooldownBreak += Time.deltaTime;
+            if (cooldownBreak >= cooldownBreakMax)
+            {
+                if (Input.GetMouseButton(0))
+                    _chunkMesh.DestroyBlock(_raycastHit.point, _raycastHit.normal);
+                if (Input.GetMouseButton(1))
+                    _chunkMesh.DestroyMultiBlock(_raycastHit.point, _raycastHit.normal, radius);
+                cooldownBreak = 0;
+            }
         }
     }
     private void OnDrawGizmos()
     {
+        
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireCube(pointPoint, Vector3.one * 0.1f);
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(pointCube, Vector3.one);
-        if(isGrounded)
-            Gizmos.color = Color.red;
-        else
-            Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position - transform.up * height, Vector3.one * sizeFeetDetection);
+        Gizmos.DrawCube(pointCube, Vector3.one * 0.5f);
     }
 }

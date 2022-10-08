@@ -74,7 +74,7 @@ public class ChunkManager : MonoBehaviour
         {
             for (int j = 0; j < _sizeY; ++j)
             {
-                Chunk myChunk = Instantiate<Chunk>(chunkPrefab, new Vector3(i * chunkSize, 0, j * chunkSize), Quaternion.identity, transform);
+                Chunk myChunk = Instantiate<Chunk>(chunkPrefab,transform.position + new Vector3(i * chunkSize, 0, j * chunkSize), Quaternion.identity, transform);
                 yield return myChunk.Init(noiseScale, chunkSize, chunkHeight);
                 myChunk.name = "myChunk " + (i * _sizeX + j);
                 chunks[i, j] = myChunk;
