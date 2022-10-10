@@ -60,6 +60,7 @@ public class TestRendererCube : MonoBehaviour
     Dictionary<Vector3, int> verticesIndex = new Dictionary<Vector3, int>(); 
     List<Block> blockRender = new List<Block>();
     [SerializeField] float sizeBlock = 1;
+   public float SizeBlock => sizeBlock;
     private void Start() => Init();
     public void Init()
     {
@@ -137,8 +138,7 @@ public class TestRendererCube : MonoBehaviour
     {
         Vector3 _posNormal = _pos - _normal * (sizeBlock/2);
         Vector3 _posBlock = _posNormal - transform.position;
-        Vector3Int _place = new Vector3Int(Mathf.FloorToInt(_posBlock.x), Mathf.FloorToInt(_posBlock.y), Mathf.FloorToInt(_posBlock.z));
-        Debug.Log(_place);
+        Vector3Int _place = new Vector3Int(Mathf.RoundToInt(_posBlock.x), Mathf.RoundToInt(_posBlock.y), Mathf.RoundToInt(_posBlock.z));
         return _place;
     }
     void SetFace(Block _block)

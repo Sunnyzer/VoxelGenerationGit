@@ -25,6 +25,7 @@ public class Player : MonoBehaviour
     bool isPressedRight = false;
     bool isPressedLeft = false;
     float cooldownBreak;
+    float radiusCube = 1;
     [SerializeField]float cooldownBreakMax;
     private void Start()
     {
@@ -69,6 +70,7 @@ public class Player : MonoBehaviour
         }
         else if(_testRenderer)
         {
+            radiusCube = _testRenderer.SizeBlock;
             cooldownBreak += Time.deltaTime;
             if (cooldownBreak >= cooldownBreakMax)
             {
@@ -98,6 +100,6 @@ public class Player : MonoBehaviour
         Gizmos.color = Color.blue;
         Gizmos.DrawWireCube(pointPoint, Vector3.one * 0.1f);
         Gizmos.color = Color.red;
-        Gizmos.DrawCube(pointCube, Vector3.one * 0.5f);
+        Gizmos.DrawWireCube(pointCube, Vector3.one * 0.5f);
     }
 }
