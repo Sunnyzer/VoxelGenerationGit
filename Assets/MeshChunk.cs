@@ -3,66 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-[Serializable]
-public class MeshBlock
-{
-    public static List<Vector3Int> allDirection = new List<Vector3Int>()
-    {
-        Vector3Int.forward,
-        Vector3Int.back,
-        Vector3Int.right,
-        Vector3Int.left,
-        Vector3Int.up,
-        Vector3Int.down
-    };
-    public Vector3Int positionBlock;
-    public BlockType blockType = BlockType.Dirt;
-    public Dictionary<Vector3Int, MeshBlock> blocksNeighbor = new Dictionary<Vector3Int, MeshBlock>();
-    public Dictionary<Vector3Int, FaceBlock> facePerDirection = new Dictionary<Vector3Int, FaceBlock>();
-    public MeshBlock(Vector3Int _position, BlockType _blockType)
-    {
-        blockType = _blockType;
-        positionBlock = _position;
-    }
-    public void SetNeighbor(MeshChunk _renderCube)
-    {
-        foreach (Vector3Int _direction in allDirection)
-        {
-            Vector3Int _posNeighbor = positionBlock + _direction;
-            if (_renderCube.IsBlockInBlocks(_posNeighbor))
-                blocksNeighbor.Add(_direction, _renderCube.blocks[_posNeighbor.x, _posNeighbor.y, _posNeighbor.z]);
-        }
-    }
-}
-public class FaceBlock
-{
-    public int[] triangles = new int[6];
-    public Vector3[] vertices = new Vector3[4];
-    public FaceBlock(Vector3[] _vertices, int[] _triangles)
-    {
-        triangles = _triangles;
-        vertices = _vertices;
-    }
-}
 
 [RequireComponent(typeof(MeshCollider), typeof(MeshFilter), typeof(MeshRenderer))]
 public class MeshChunk : MonoBehaviour
 {
     Mesh blockMesh;
-    public MeshBlock[,,] blocks;
+    public Block[,,] blocks;
     [SerializeField] MeshFilter meshFilter;
     [SerializeField] MeshCollider meshCollider;
     [SerializeField] List<Vector3> vertices = new List<Vector3>();
     [SerializeField] List<int> triangles = new List<int>();
     List<Vector2> uvs = new List<Vector2>();
     [SerializeField] bool debugBlock = false;
-    List<MeshBlock> blockRender = new List<MeshBlock>();
+    List<Block> blockRender = new List<Block>();
     private void Start() => Init();
     public void Init()
     {
-        blocks = new MeshBlock[16, 100, 16];
+        blocks = new Block[16, 100, 16];
         GenerateBlocks();
-        RunThroughAllBlocks((_posBlock) => { blocks[_posBlock.x, _posBlock.y, _posBlock.z].SetNeighbor(this); });
+        RunThroughAllBlocks((_posBlock) => { blocks[_posBlock.x, _posBlock.y, _posBlock.z].SetNeighbor(null); });
         for (int i = 0; i < blockRender.Count; i++)
             SetFace(blockRender[i]);
         RenderMesh();
@@ -73,7 +32,7 @@ public class MeshChunk : MonoBehaviour
         {
             for (int z = 0; z < 16; z++)
             {
-                float noiseValue = Mathf.PerlinNoise((ChunkManager.noisePosX + transform.position.x + x) * 0.0005f, (ChunkManager.noisePosY + transform.position.z + z) * 0.0005f);
+                float noiseValue = Mathf.PerlinNoise((OldChunkManager.noisePosX + transform.position.x + x) * 0.0005f, (OldChunkManager.noisePosY + transform.position.z + z) * 0.0005f);
                 int groundPosition = Mathf.RoundToInt(noiseValue * 100);
                 BlockType voxelType = BlockType.Dirt;
                 for (int y = 0; y < 100; y++)
@@ -86,14 +45,14 @@ public class MeshChunk : MonoBehaviour
                     {
                         voxelType = BlockType.Grass_Dirt;
                     }
-                    blocks[x, y, z] = new MeshBlock(new Vector3Int(x, y, z), voxelType);
+                    blocks[x, y, z] = new Block(new Vector3Int(x, y, z), voxelType, null);
                     if (voxelType == BlockType.Grass_Dirt)
                         blockRender.Add(blocks[x, y, z]);
                 }
             }
         }
     }
-    void UpdateBlockToDestroy(MeshBlock _toDestroy)
+    void UpdateBlockToDestroy(Block _toDestroy)
     {
         _toDestroy.blockType = BlockType.Air;
         blockRender.Remove(_toDestroy);
@@ -118,7 +77,7 @@ public class MeshChunk : MonoBehaviour
     }
     public void DestroyBlock(Vector3Int _posInChunk)
     {
-        MeshBlock _block = blocks[_posInChunk.x, _posInChunk.y, _posInChunk.z];
+        Block _block = blocks[_posInChunk.x, _posInChunk.y, _posInChunk.z];
         UpdateBlockToDestroy(_block);
         ResetVerticesAndTriangles();
         RenderMesh();
@@ -136,7 +95,7 @@ public class MeshChunk : MonoBehaviour
         Vector3 _posBlock = _posBlockInBlock - transform.position;
         return new Vector3Int(Mathf.RoundToInt(_posBlock.x), Mathf.RoundToInt(_posBlock.y), Mathf.RoundToInt(_posBlock.z));
     }
-    void SetFace(MeshBlock _block)
+    void SetFace(Block _block)
     {
         if (_block.blockType == BlockType.Air) return;
         foreach (var item in _block.blocksNeighbor)
@@ -184,13 +143,13 @@ public class MeshChunk : MonoBehaviour
                 _trianglesTemp.Add(vertices.Count - 1);
                 _trianglesTemp.Add(vertices.Count - 2);
 
-                _block.facePerDirection.Add(item.Key, new FaceBlock(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
+                _block.facePerDirection.Add(item.Key, new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
                 if (!blockRender.Contains(_block))
                     blockRender.Add(_block);
             }
         }
     }
-    void AddFace(MeshBlock _block, MeshBlock _blockDestroy, Vector3Int _direction)
+    void AddFace(Block _block, Block _blockDestroy, Vector3Int _direction)
     {
         if (_block.blockType == BlockType.Air || _blockDestroy.blockType != BlockType.Air) return;
         List<int> _trianglesTemp = new List<int>();
@@ -226,9 +185,9 @@ public class MeshChunk : MonoBehaviour
         _trianglesTemp.Add(vertices.Count - 2);
 
         if (!_block.facePerDirection.Keys.Contains(_direction))
-            _block.facePerDirection.Add(_direction, new FaceBlock(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
+            _block.facePerDirection.Add(_direction, new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray()));
         else
-            _block.facePerDirection[_direction] = new FaceBlock(_verticesTemp.ToArray(), _trianglesTemp.ToArray());
+            _block.facePerDirection[_direction] = new Face(_verticesTemp.ToArray(), _trianglesTemp.ToArray());
 
         if (!blockRender.Contains(_block))
             blockRender.Add(_block);
@@ -240,7 +199,7 @@ public class MeshChunk : MonoBehaviour
         int _countBlockRender = blockRender.Count;
         for (int i = 0; i < _countBlockRender; i++)
         {
-            Dictionary<Vector3Int, FaceBlock>.ValueCollection _faces = blockRender[i].facePerDirection.Values;
+            Dictionary<Vector3Int, Face>.ValueCollection _faces = blockRender[i].facePerDirection.Values;
             foreach (var item in _faces)
             {
                 triangles.AddRange(item.triangles);

@@ -26,6 +26,7 @@ public class Player : MonoBehaviour
     bool isPressedLeft = false;
     float cooldownBreak;
     float radiusCube = 1;
+    Block pointBlockData;
     [SerializeField]float cooldownBreakMax;
     private void Start()
     {
@@ -51,11 +52,12 @@ public class Player : MonoBehaviour
         Debug.DrawRay(Camera.main.transform.position, orientation.forward * 100, Color.red);
         cooldownBreak += Time.deltaTime;
         if (!_hit) return;
-        Chunk _chunk = _raycastHit.collider.GetComponent<Chunk>();
-        TestRendererCube _testRenderer = _raycastHit.collider.GetComponent<TestRendererCube>();
+        OldChunk _chunk = _raycastHit.collider.GetComponent<OldChunk>();
+        Chunk _testRenderer = _raycastHit.collider.GetComponent<Chunk>();
         MeshChunk _chunkMesh = _raycastHit.collider.GetComponent<MeshChunk>();
         pointCube = _testRenderer.GetBlockInChunkFromWorldLocationAndNormal(_raycastHit.point, _raycastHit.normal);
         pointPoint = _raycastHit.point;
+        pointBlockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(pointCube);
         if (_chunk)
         {
             if (cooldownBreak >= cooldownBreakMax)
@@ -101,5 +103,11 @@ public class Player : MonoBehaviour
         Gizmos.DrawWireCube(pointPoint, Vector3.one * 0.1f);
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(pointCube, Vector3.one * 0.5f);
+        Gizmos.color = Color.magenta;
+        if (!pointBlockData) return;
+        foreach (var item in pointBlockData.blocksNeighbor)
+        {
+            Gizmos.DrawWireCube(pointCube + item.Key, Vector3.one);
+        }
     }
 }
