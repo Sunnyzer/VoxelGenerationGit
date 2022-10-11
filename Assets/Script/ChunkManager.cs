@@ -10,6 +10,7 @@ public class ChunkManager : MonoBehaviour
     public event Action OnFinishLoad = null;
     public static int noisePosX = 0;
     public static int noisePosY = 0;
+    public static float sizeBlock;
     [SerializeField] int chunksAmountX = 10;
     [SerializeField] int chunksAmountZ = 10;
     [SerializeField] Chunk chunkPrefab = null;
@@ -30,6 +31,7 @@ public class ChunkManager : MonoBehaviour
     }
     private IEnumerator Start()
     {
+        sizeBlock = chunkParam.sizeBlock;
         yield return GenerateMap();
     }
     public Block GetBlockDataFromWorldPosition(Vector3Int _posBlock)

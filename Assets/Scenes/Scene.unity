@@ -206,12 +206,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea6d023d9b11a5644897e3828b8f2ded, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  chunksAmountX: 4
-  chunksAmountZ: 4
+  chunksAmountX: 10
+  chunksAmountZ: 10
   chunkPrefab: {fileID: 4692754289730419539, guid: 8fcaf26e4c45fe94c8c0c2e177f618ef, type: 3}
   chunkParam:
     chunkSize: 16
-    chunkHeight: 70
+    chunkHeight: 100
     sizeBlock: 1
     noiseScale: 0.005
   onDebug: 0

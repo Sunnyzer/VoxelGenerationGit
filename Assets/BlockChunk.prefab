@@ -123,3 +123,8 @@ MonoBehaviour:
     chunkHeight: 70
     sizeBlock: 1
     noiseScale: 0.005
+  indexChunk: {x: 0, y: 0}
+  frequency: 1
+  amplitude: 1
+  lacunarity: 2
+  persitence: 0.5

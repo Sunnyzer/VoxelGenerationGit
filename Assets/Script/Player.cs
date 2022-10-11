@@ -57,7 +57,8 @@ public class Player : MonoBehaviour
         MeshChunk _chunkMesh = _raycastHit.collider.GetComponent<MeshChunk>();
         pointCube = _testRenderer.GetBlockInChunkFromWorldLocationAndNormal(_raycastHit.point, _raycastHit.normal);
         pointPoint = _raycastHit.point;
-        pointBlockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(pointCube);
+        Vector3Int _posChunk = new Vector3Int(Mathf.RoundToInt(_testRenderer.transform.position.x), Mathf.RoundToInt(_testRenderer.transform.position.y), Mathf.RoundToInt(_testRenderer.transform.position.z));
+        pointBlockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(_posChunk + pointCube);
         if (_chunk)
         {
             if (cooldownBreak >= cooldownBreakMax)
@@ -98,16 +99,20 @@ public class Player : MonoBehaviour
     }
     private void OnDrawGizmos()
     {
-        
+        if (!Application.isPlaying) return;
         Gizmos.color = Color.blue;
         Gizmos.DrawWireCube(pointPoint, Vector3.one * 0.1f);
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(pointCube, Vector3.one * 0.5f);
+        Gizmos.DrawWireCube(pointCube, Vector3.one * ChunkManager.sizeBlock);
         Gizmos.color = Color.magenta;
-        if (!pointBlockData) return;
-        foreach (var item in pointBlockData.blocksNeighbor)
+        if(pointBlockData)
         {
-            Gizmos.DrawWireCube(pointCube + item.Key, Vector3.one);
+            foreach (var item in pointBlockData.blocksNeighbor)
+            {
+                Vector3 _direction = item.Key;
+                Vector3 _posCube = item.Value.owner.transform.position + pointCube + _direction * ChunkManager.sizeBlock;
+                Gizmos.DrawWireCube( _posCube, Vector3.one * ChunkManager.sizeBlock);
+            }
         }
     }
 }

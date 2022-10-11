@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static UnityEditor.Progress;
 
 [Serializable]
 public class Block
@@ -45,11 +44,7 @@ public class Block
             }
         }
     }
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <returns>return if block has already this face</returns>
-    public bool AddFace(Vector3Int _direction, Face _face)
+    public bool AddNewFace(Vector3Int _direction, Face _face)
     {
         if (!facePerDirection.Keys.Contains(_direction))
         {
@@ -63,6 +58,7 @@ public class Block
         }
     }
     public static bool operator !(Block _block) => _block == null;
+    public static implicit operator bool(Block _block) => _block != null;
 }
 public class Face
 {
@@ -80,16 +76,20 @@ public struct ChunkParam
 {
     public int chunkSize; 
     public int chunkHeight;
+    public int octaves;
     public float sizeBlock; 
     public float noiseScale;
+
     public ChunkParam(int _chunkSize,int _chunkHeight,float _noiseScale,float _sizeBlock)
     {
         chunkSize = _chunkSize;
         noiseScale = _noiseScale; 
         chunkHeight = _chunkHeight;
         sizeBlock = _sizeBlock;
+        octaves = 2;
     }
 }
+
 
 [RequireComponent(typeof(MeshCollider),typeof(MeshFilter),typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
@@ -113,6 +113,10 @@ public class Chunk : MonoBehaviour
     [SerializeField] ChunkParam chunkParam;
     [SerializeField] Dictionary<Vector2Int, Chunk> chunkNeighbor = new Dictionary<Vector2Int, Chunk>();
     [SerializeField] Vector2Int indexChunk;
+    [SerializeField] float frequency = 1;
+    [SerializeField] float amplitude = 1;
+    [SerializeField] float lacunarity = 2;
+    [SerializeField] float persitence = 0.5f;
     List<Block> blockRender = new List<Block>();
     Mesh blockMesh;
     public int ChunkSize => chunkParam.chunkSize;
@@ -127,13 +131,28 @@ public class Chunk : MonoBehaviour
         blocks = new Block[chunkParam.chunkSize, chunkParam.chunkHeight, chunkParam.chunkSize];
         GenerateBlocks();
     }
+    float CalcPerlin(int x,int z)
+    {
+        amplitude = 0.5f;
+        frequency = chunkParam.noiseScale;
+        float _value = 0;
+        for (int i = 0; i < chunkParam.octaves; i++)
+        {
+            _value += Mathf.PerlinNoise((ChunkManager.noisePosX + transform.position.x + x) * frequency, (ChunkManager.noisePosY + transform.position.z + z) * frequency) * amplitude;
+            amplitude *= persitence;
+            frequency *= lacunarity;
+        }
+        return _value;
+    }
     void GenerateBlocks()
     {
         for (int x = 0; x < chunkParam.chunkSize; x++)
         {
             for (int z = 0; z < chunkParam.chunkSize; z++)
             {
-                float noiseValue = Mathf.PerlinNoise((OldChunkManager.noisePosX + transform.position.x + x) * chunkParam.noiseScale, (OldChunkManager.noisePosY + transform.position.z + z) * chunkParam.noiseScale);
+                //float noiseValue = Mathf.PerlinNoise((OldChunkManager.noisePosX + transform.position.x + x) * chunkParam.noiseScale, (OldChunkManager.noisePosY + transform.position.z + z) * chunkParam.noiseScale);
+                float noiseValue = CalcPerlin(x,z);
+                Debug.Log(noiseValue);
                 int groundPosition = Mathf.RoundToInt(noiseValue * chunkParam.chunkHeight);
                 BlockType voxelType = BlockType.Dirt;
                 for (int y = 0; y < chunkParam.chunkHeight; y++)
@@ -203,8 +222,9 @@ public class Chunk : MonoBehaviour
         }
         for (int i = 0; i < _chunkToUpdate.Count; i++)
         {
-            UpdateVerticesAndTriangles();
-            RecalculateMesh();
+            Debug.Log(_chunkToUpdate[i].name);
+            _chunkToUpdate[i].UpdateVerticesAndTriangles();
+            _chunkToUpdate[i].RecalculateMesh();
         }
     }
     public void DestroyMultiBlock(Vector3 _pos, Vector3 _normal, int _radius)
@@ -217,7 +237,6 @@ public class Chunk : MonoBehaviour
                 {
                     Block _toDestroy = ChunkManager.Instance.GetBlockDataFromWorldPosition(PositionClamp + _posBlock + new Vector3Int(x, y, z));
                     if (!_toDestroy) continue;
-                    //_toDestroy = blocks[_blockPosToDestroy.x, _blockPosToDestroy.y, _blockPosToDestroy.z];
                     _toDestroy.blockType = BlockType.Air;
                     blockRender.Remove(_toDestroy);
                     _toDestroy.facePerDirection.Clear();
@@ -242,8 +261,8 @@ public class Chunk : MonoBehaviour
         }
         for (int i = 0; i < _chunkToUpdate.Count; i++)
         {
-            UpdateVerticesAndTriangles();
-            RecalculateMesh();
+            _chunkToUpdate[i].UpdateVerticesAndTriangles();
+            _chunkToUpdate[i].RecalculateMesh();
         }
     }
     public void DestroyBlock(Vector3Int _posInChunk)
@@ -258,13 +277,6 @@ public class Chunk : MonoBehaviour
         Vector3Int _posBlock = GetBlockInChunkFromWorldLocationAndNormal(_pos, _normal);
         if (!IsPosBlockInChunk(_posBlock)) return;
         DestroyBlock(_posBlock);
-    }
-    public Vector3Int GetBlockInChunkFromWorldLocationAndNormal(Vector3 _pos, Vector3 _normal)
-    {
-        Vector3 _posNormal = _pos - _normal * (sizeBlock/2);
-        Vector3 _posBlock = _posNormal - transform.position;
-        Vector3Int _place = new Vector3Int(Mathf.RoundToInt(_posBlock.x), Mathf.RoundToInt(_posBlock.y), Mathf.RoundToInt(_posBlock.z));
-        return _place;
     }
     public void BuildFace(Chunk _chunk,Vector3 _facePos,Vector3 _directionUp, Vector3 _directionRight)
     {
@@ -292,19 +304,19 @@ public class Chunk : MonoBehaviour
         {
             if (item.Value.blockType != BlockType.Air) continue;
             Vector3 _directionNeighbor = item.Key;
-            Vector3 _directionFace = _directionNeighbor * (sizeBlock / 2);
+            Vector3 _directionFace = _directionNeighbor * (chunkParam.sizeBlock / 2);
             bool _upVector = Vector3Int.up == item.Key || Vector3Int.down == item.Key;
             Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
-            Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * (sizeBlock / 2);
+            Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * (chunkParam.sizeBlock / 2);
             Vector3 _posBlock = _block.positionBlock;
-            Vector3 _facePos = _posBlock * sizeBlock + _directionFace;
+            Vector3 _facePos = _posBlock * chunkParam.sizeBlock + _directionFace;
 
             BuildFace(item.Value.owner, _facePos, _directionUp, _directionRight);
 
-            Vector3[] _vertices = vertices.GetRange(vertices.Count - 4, 4).ToArray();
-            int[] _triangles = triangles.GetRange(triangles.Count - 6, 6).ToArray();
+            Vector3[] _vertices = item.Value.owner.vertices.GetRange(item.Value.owner.vertices.Count - 4, 4).ToArray();
+            int[] _triangles = item.Value.owner.triangles.GetRange(item.Value.owner.triangles.Count - 6, 6).ToArray();
             Face _face = new Face(_vertices, _triangles);
-            _block.AddFace(item.Key,_face);
+            _block.AddNewFace(item.Key,_face);
 
             if(!blockRender.Contains(_block))
                 blockRender.Add(_block);
@@ -313,23 +325,24 @@ public class Chunk : MonoBehaviour
     void AddFace(Block _block, Block _blockDestroy, Vector3Int _direction)
     {
         if (_block.blockType == BlockType.Air || _blockDestroy.blockType != BlockType.Air) return;
-        Vector3 _directionFace = new Vector3(_direction.x, _direction.y, _direction.z) * (sizeBlock / 2);
+        Vector3 _directionFace = new Vector3(_direction.x, _direction.y, _direction.z) * (chunkParam.sizeBlock / 2);
         bool _upVector = Vector3Int.up == _direction || Vector3Int.down == _direction;
         Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3.right : Vector3.up) * _directionFace;
-        Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * (sizeBlock / 2);
+        Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * (chunkParam.sizeBlock / 2);
         Vector3 _posBlock = _block.positionBlock;
-        Vector3 _facePos = _posBlock * sizeBlock + _directionFace;
+        Vector3 _facePos = _posBlock * chunkParam.sizeBlock + _directionFace;
 
         BuildFace(_block.owner, _facePos ,_directionUp, _directionRight);
 
         Vector3[] _vertices = _block.owner.vertices.GetRange(_block.owner.vertices.Count - 4, 4).ToArray();
         int[] _triangles = _block.owner.triangles.GetRange(_block.owner.triangles.Count - 6, 6).ToArray();
         Face _face = new Face(_vertices, _triangles);
-        _block.AddFace(_direction, _face);
+        _block.AddNewFace(_direction, _face);
             
         if (!_block.owner.blockRender.Contains(_block))
             _block.owner.blockRender.Add(_block);
     }
+
     void UpdateVerticesAndTriangles()
     {
         triangles.Clear();
@@ -366,6 +379,14 @@ public class Chunk : MonoBehaviour
         blockMesh.RecalculateNormals();
         meshFilter.mesh = blockMesh;
         meshCollider.sharedMesh = blockMesh;
+    }
+    public Vector3Int GetBlockInChunkFromWorldLocationAndNormal(Vector3 _pos, Vector3 _normal)
+    {
+        float _sizeHalfBlock = chunkParam.sizeBlock / 2;
+        Vector3 _posNormal = _pos - _normal * _sizeHalfBlock;
+        Vector3 _posBlock = _posNormal - transform.position;
+        Vector3Int _place = new Vector3Int(Mathf.FloorToInt((_posBlock.x + _sizeHalfBlock) / chunkParam.sizeBlock), Mathf.FloorToInt((_posBlock.y + _sizeHalfBlock) / chunkParam.sizeBlock), Mathf.FloorToInt((_posBlock.z + _sizeHalfBlock) / chunkParam.sizeBlock));
+        return _place;
     }
     private void OnDrawGizmosSelected()
     {
