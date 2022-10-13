@@ -4,21 +4,21 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public class BlockData
+public class OldBlockData
 {
     public Vector3Int position;
     public BlockType blockType = BlockType.Nothing;
-    [HideInInspector] public BlockData[] neighborBlockData;
+    [HideInInspector] public OldBlockData[] neighborBlockData;
     public List<int> placementTriangles = new List<int>();
     public List<int> placementVertices = new List<int>(); 
     public OldChunk owner;
-    public BlockData(BlockType _blockType, Vector3Int _pos,OldChunk _owner)
+    public OldBlockData(BlockType _blockType, Vector3Int _pos,OldChunk _owner)
     {
         blockType = _blockType;
         position = _pos;
         owner = _owner;
     }
-    public static bool operator! (BlockData _a) => _a == null;
+    public static bool operator! (OldBlockData _a) => _a == null;
 }
 
 class FaceVertices
@@ -73,19 +73,19 @@ public class OldChunk : MonoBehaviour
         { Vector3Int.back + Vector3Int.right, null },
         { Vector3Int.back + Vector3Int.left, null },
     };
-    BlockData[,,] blocks;
-    List<BlockData> blockRenderer = new List<BlockData>();
-    public BlockData[,,] BlockDatas => blocks;
+    OldBlockData[,,] blocks;
+    List<OldBlockData> blockRenderer = new List<OldBlockData>();
+    public OldBlockData[,,] BlockDatas => blocks;
     Mesh chunkMesh;
     float noiseScale = 0.03f;
     int chunkHeight = 30;
     int chunkSize = 8;
     int waterThreshold = 20;
 
-    List<BlockData> _blockDatas = new List<BlockData>();
+    List<OldBlockData> _blockDatas = new List<OldBlockData>();
 
     [SerializeField] private bool onDebug;
-    private BlockData blockDebug;
+    private OldBlockData blockDebug;
     Dictionary<Vector3Int, FaceVertices> dir;
     public IEnumerator Init(float _noiseScale, int _chunkSize, int _chunckHeight)
     {
@@ -93,7 +93,7 @@ public class OldChunk : MonoBehaviour
         chunkHeight = _chunckHeight;
         chunkSize = _chunkSize;
         chunksIndex = OldChunkManager.Instance.GetChunkIndexFromWorldPosition(transform.position);
-        blocks = new BlockData[chunkSize, chunkHeight, chunkSize];
+        blocks = new OldBlockData[chunkSize, chunkHeight, chunkSize];
         yield return GenerateVoxelsBlocks();
     }
     private IEnumerator GenerateVoxelsBlocks()
@@ -118,7 +118,7 @@ public class OldChunk : MonoBehaviour
                     {
                         voxelType = BlockType.Grass_Dirt;
                     }
-                    blocks[x, y, z] = new BlockData(voxelType, new Vector3Int(x, y, z), this);
+                    blocks[x, y, z] = new OldBlockData(voxelType, new Vector3Int(x, y, z), this);
                     if (voxelType == BlockType.Grass_Dirt)
                         _blockDatas.Add(blocks[x, y, z]);
                 }
@@ -173,19 +173,19 @@ public class OldChunk : MonoBehaviour
 
     public void DestroyBlock(Vector3Int _pos)
     {
-        BlockData _blockData = OldChunkManager.Instance.GetBlockDataFromWorldPosition(_pos);
+        OldBlockData _blockData = OldChunkManager.Instance.GetBlockDataFromWorldPosition(_pos);
         if (_blockData == null) return;
         _blockData.blockType = BlockType.Air;
         onDebug = true;
         ChangeMesh(_blockData);
     }
-    public void ChangeMesh(BlockData _blockData)
+    public void ChangeMesh(OldBlockData _blockData)
     {
         if (!_blockData) return;
-        BlockData[] _neighbor = _blockData.neighborBlockData;
+        OldBlockData[] _neighbor = _blockData.neighborBlockData;
         List<OldChunk> _toUpdate = new List<OldChunk>();
         _toUpdate.Add(this);
-        foreach (BlockData _blockDataNeighbor in _neighbor)
+        foreach (OldBlockData _blockDataNeighbor in _neighbor)
         {
             if (!_blockDataNeighbor || _blockDataNeighbor.blockType == BlockType.Air) continue;
             Vector3 _blockNeighborPos = _blockDataNeighbor.position;
@@ -222,7 +222,7 @@ public class OldChunk : MonoBehaviour
         for (int i = 0; i < _toUpdate.Count; ++i)
             _toUpdate[i].UpdateVertices();
     }
-    public void ResetVerticesAndTriangleInBlockData(BlockData _blockData)
+    public void ResetVerticesAndTriangleInBlockData(OldBlockData _blockData)
     {
         int _count = _blockData.placementTriangles.Count;
         for (int i = 0; i < _count; ++i)
@@ -258,13 +258,13 @@ public class OldChunk : MonoBehaviour
                     if ((_pos - _posBlock).sqrMagnitude >= _radius * _radius) continue;
                     if (IsBlockInChunk(_posBlock))
                     {
-                        BlockData _blockData = OldChunkManager.Instance.GetBlockDataFromWorldPosition(_posBlock);
+                        OldBlockData _blockData = OldChunkManager.Instance.GetBlockDataFromWorldPosition(_posBlock);
                         if (!_blockData) continue;
                         _blockData.blockType = BlockType.Air;
                     }
                     else
                     {
-                        BlockData _blockData = OldChunkManager.Instance.GetBlockDataFromWorldPosition(_posBlock);
+                        OldBlockData _blockData = OldChunkManager.Instance.GetBlockDataFromWorldPosition(_posBlock);
                         if (!_blockData) continue;
                         _blockData.blockType = BlockType.Air;
                         if(!_toUpdate.Contains(_blockData.owner))
@@ -300,10 +300,10 @@ public class OldChunk : MonoBehaviour
     }
     void MakeCube(Vector3Int _pos)
     {
-        BlockData currentBlock = blocks[_pos.x, _pos.y, _pos.z];
+        OldBlockData currentBlock = blocks[_pos.x, _pos.y, _pos.z];
         if (currentBlock.blockType == BlockType.Air) return;
-        BlockData[] _neighbor = currentBlock.neighborBlockData;
-        foreach (BlockData _blockData in _neighbor)
+        OldBlockData[] _neighbor = currentBlock.neighborBlockData;
+        foreach (OldBlockData _blockData in _neighbor)
         {
             if (_blockData.blockType != BlockType.Air) continue;
             if(!blockRenderer.Contains(currentBlock))
@@ -332,9 +332,9 @@ public class OldChunk : MonoBehaviour
             currentBlock.placementVertices.Add(chunksVertices.Count - 4);
         }
     }
-    void GetAllNeighBorBlock(Vector3Int _blockPos, out BlockData[] _blockDatas)
+    void GetAllNeighBorBlock(Vector3Int _blockPos, out OldBlockData[] _blockDatas)
     {
-        List<BlockData> _tempBlockDatas = new List<BlockData>();
+        List<OldBlockData> _tempBlockDatas = new List<OldBlockData>();
         foreach (Vector3Int dir in allDirection)
         {
             Vector3Int _blockSidePos = _blockPos + dir;

@@ -33,7 +33,7 @@ public class OldChunkManager : MonoBehaviour
     {
         yield return GenerateMap();
     }
-    public BlockData GetBlockDataFromWorldPosition(Vector3Int _posBlock)
+    public OldBlockData GetBlockDataFromWorldPosition(Vector3Int _posBlock)
     {
         Vector2Int _chunkPosBlock = GetChunkIndexFromWorldPosition(_posBlock);
         OldChunk _chunkBlock = GetChunk(_chunkPosBlock.x, _chunkPosBlock.y);

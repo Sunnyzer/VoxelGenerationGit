@@ -60,6 +60,7 @@ public class Block
     public static bool operator !(Block _block) => _block == null;
     public static implicit operator bool(Block _block) => _block != null;
 }
+[Serializable]
 public class Face
 {
     public int[] triangles = new int[6];
