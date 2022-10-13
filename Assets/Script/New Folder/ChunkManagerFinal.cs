@@ -1,21 +1,22 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
 
 public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
 {
     [SerializeField] WorldParam worldParam;
-    ChunkFinal[,] chunks;
-    ChunkFinal chunksPrefab;
+    [SerializeField] ChunkFinal chunksPrefab;
     [SerializeField] Vector2Int offset;
+    ChunkFinal[,] chunks;
 
     public WorldParam WorldParam => worldParam;
 
-    private IEnumerator Start() => GenerateChunks();
+    private IEnumerator Start()
+    {
+        yield return GenerateChunks();
+    }
 
     IEnumerator GenerateChunks()
     {
-
         yield return CreateChunks();
         yield return InitChunks();
         yield return RenderChunks();
@@ -29,8 +30,9 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         {
             for (int z = 0; z < _chunkAmount; z++)
             {
-                ChunkFinal _chunkFinal = Instantiate<ChunkFinal>(chunksPrefab, new Vector3(x * _chunkSize, z * _chunkSize), Quaternion.identity, transform);
-                chunks[x, z].name = "Chunk" + (x + z * _chunkAmount); 
+                ChunkFinal _chunkFinal = Instantiate<ChunkFinal>(chunksPrefab, new Vector3(x * _chunkSize, 0, z * _chunkSize), Quaternion.identity, transform);
+                yield return _chunkFinal.GenerateBlocks(new ChunkParamFinal(worldParam.chunkSize, worldParam.chunkHeight, worldParam.sizeBlock,new Vector2Int(x,z)));
+                _chunkFinal.name = "Chunk" + (x + z * _chunkAmount); 
                 chunks[x, z] = _chunkFinal;
             }
         }
@@ -61,7 +63,14 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
     }
     public ChunkFinal GetChunkFromIndexChunk(int _indexChunkX, int _indexChunkZ)
     {
+        if(IsIndexChunkInChunkManager(_indexChunkX, _indexChunkZ))
+            return chunks[_indexChunkX, _indexChunkZ];
         return null;
+    }
+    public bool IsIndexChunkInChunkManager(int _indexChunkX, int _indexChunkZ)
+    {
+        return (_indexChunkX < worldParam.chunkAmount && _indexChunkX >= 0) &&
+               (_indexChunkZ < worldParam.chunkAmount && _indexChunkZ >= 0);
     }
     public ChunkFinal GetChunkFromIndexChunk(Vector2Int _indexChunk)
     {

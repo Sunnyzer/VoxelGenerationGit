@@ -6,16 +6,17 @@ public class BlockManager : Singleton<BlockManager>
     {
         return null;
     }
-    public Vector3Int GetBlockPositionWorldFromBlock(Block _block)
+    public Vector3Int GetBlockPositionWorldFromBlock(BlockData _block)
+    {
+        Vector3Int _blockWorldPos = _block.owner.WorldPosition + _block.positionBlock;
+        return _blockWorldPos;
+    }
+    public Vector3Int GetBlockPositionWorldFromBlockPosInChunk(BlockData _block)
     {
         return new Vector3Int();
     }
-    public Vector3Int GetBlockPositionWorldFromBlockPosInChunk(Block _block)
+    public BlockData[] GetBlocksFromBlockPositionToBlockPosition(Vector3Int _blockWorldPos, Vector3Int _blockWorldPos2)
     {
-        return new Vector3Int();
-    }
-    public Block[] GetBlocksFromBlockPositionToBlockPosition(Vector3Int _blockWorldPos, Vector3Int _blockWorldPos2)
-    {
-        return new Block[10];
+        return new BlockData[10];
     }
 }
