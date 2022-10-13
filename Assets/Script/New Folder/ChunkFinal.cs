@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public struct ChunkParamFinal
@@ -25,12 +26,17 @@ public class ChunkFinal : MonoBehaviour
     [SerializeField] Vector2Int indexChunk;
     [SerializeField] MeshData meshData;
     ChunkParamFinal chunkParam;
-    List<BlockData> chunkRender = new List<BlockData>();
-    Dictionary<Vector3, int> verticesIndex = new Dictionary<Vector3, int>();
-    BlockData[,,] blocks;
 
+    List<BlockData> chunkRender = new List<BlockData>();
+    BlockData[,,] blocks;
+    Dictionary<Vector2Int,ChunkFinal> neighborChunk = new Dictionary<Vector2Int, ChunkFinal>();
+
+    public BlockData[,,] Blocks => blocks;
     public Vector3Int WorldPosition => new Vector3Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.z));
-    
+
+    public int ChunkSize => chunkParam.chunkSize;
+    public int ChunkHeight => chunkParam.chunkHeight;
+
     public IEnumerator GenerateBlocks()
     {
         blocks = new BlockData[chunkParam.chunkSize, chunkParam.chunkHeight, chunkParam.chunkSize];
@@ -55,13 +61,29 @@ public class ChunkFinal : MonoBehaviour
     }
     public IEnumerator InitChunks()
     {
+        foreach (var item in Direction.direction2D)
+        {
+            ChunkFinal _chunkNeighbor = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(indexChunk.x + item.x, indexChunk.y + item.y);
+            if(_chunkNeighbor)
+                neighborChunk.Add(item, _chunkNeighbor);
+        }
+        RunThroughAllBlocks((_blockPos) => { blocks[_blockPos.x, _blockPos.y, _blockPos.z].SetNeighbor(this);  });
         yield return null;
     }
     public IEnumerator UpdateMesh()
     {
+        meshData.UpdateMesh(meshCollider, meshFilter);
         yield return null;
     }
 
+    void DestroyWorldPositionRadius(Vector3 _blockPos, int radius)
+    {
+
+    }
+    void DestroyWorldPositionBlock(Vector3 _blockPos)
+    {
+
+    }
     void RecalculateMesh()
     {
 
@@ -84,4 +106,13 @@ public class ChunkFinal : MonoBehaviour
                (_blockPos.y >= 0 && _blockPos.y < chunkParam.chunkHeight) &&
                (_blockPos.z >= 0 && _blockPos.z < chunkParam.chunkSize);
     }
+    public bool GetChunkNeighbor(Vector2Int _direction, out ChunkFinal _neighbor)
+    {
+        if(neighborChunk.ContainsKey(_direction))
+            _neighbor = neighborChunk[_direction];
+        else
+            _neighbor = null;
+        return _neighbor != null;
+    }
+        
 }
