@@ -93,7 +93,7 @@ public class ChunkFinal : MonoBehaviour
         {
             if (item.Value.blockType != BlockType.Air) continue;
             Vector3 _direction = item.Key;
-            Vector3Int _faceCenter = _block.positionBlock + item.Key;
+            Vector3 _faceCenter = _block.positionBlock + _direction * (chunkParam.sizeBlock * 0.5f);
             Face _faceAddToMesh = meshData.AddFace(_faceCenter, item.Key);
             _block.AddNewFace(item.Key, _faceAddToMesh);
         }
@@ -146,10 +146,9 @@ public class ChunkFinal : MonoBehaviour
         meshData.DebugMesh();
         if (!blockData) return;
         Gizmos.DrawCube(BlockManager.Instance.GetBlockPositionWorldFromBlock(blockData), Vector3.one);
-        Gizmos.color = Color.red;
         foreach (var item in blockData.blocksNeighbor)
         {
-            Gizmos.DrawWireCube(BlockManager.Instance.GetBlockPositionWorldFromBlock(item.Value), Vector3.one);
+            Gizmos.DrawCube(BlockManager.Instance.GetBlockPositionWorldFromBlock(item.Value), Vector3.one);
         }
         foreach (var item in neighborChunk)
         {
