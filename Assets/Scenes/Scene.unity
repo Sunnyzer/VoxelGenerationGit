@@ -237,7 +237,7 @@ MonoBehaviour:
     octaves: 2
     sizeBlock: 1
     amplitude: 0.5
-    frequence: 0.005
+    frequence: 0
     lacunarity: 2
     persistence: 0.5
   chunksPrefab: {fileID: 5597668264448674081, guid: a9b0c11615b53f949bb8c5053d07c4aa, type: 3}
