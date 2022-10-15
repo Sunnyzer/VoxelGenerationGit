@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static UnityEditor.Progress;
-using static UnityEngine.UI.GridLayoutGroup;
 
 [Serializable]
 public struct ChunkParamFinal
@@ -131,6 +129,7 @@ public class ChunkFinal : MonoBehaviour
                 for (int y = -radius; y < radius; y++)
                 {
                     Vector3Int _blockDataPos = _blockWorldPos - new Vector3Int(x,y,z);
+                    if ((_blockDataPos - _blockWorldPos).sqrMagnitude > radius * radius) continue;
                     BlockData _blockDataNeighbor = BlockManager.Instance.GetBlockFromBlockWorldPosition(_blockDataPos);
                     if (!_blockDataNeighbor || _blockDataNeighbor.blockType == BlockType.Air) continue;
                     _blockDataNeighbor.blockType = BlockType.Air;

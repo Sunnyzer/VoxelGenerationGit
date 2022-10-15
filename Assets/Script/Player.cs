@@ -14,7 +14,7 @@ public class Player : MonoBehaviour
     [SerializeField] float moveSpeed = 10;
     [SerializeField] float jumpHigh = 400;
     [SerializeField] float sizeFeetDetection = 0.75f;
-    [SerializeField] float gravityScale = 1f;
+    [SerializeField] public float gravityScale = 1f;
     [SerializeField] Transform orientation = null;
     [SerializeField] int radius = 3;
     [SerializeField] float cooldownBreakMax;
