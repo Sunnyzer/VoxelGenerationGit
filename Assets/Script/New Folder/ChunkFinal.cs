@@ -133,6 +133,7 @@ public class ChunkFinal : MonoBehaviour
                     BlockData _blockDataNeighbor = BlockManager.Instance.GetBlockFromBlockWorldPosition(_blockDataPos);
                     if (!_blockDataNeighbor || _blockDataNeighbor.blockType == BlockType.Air) continue;
                     _blockDataNeighbor.blockType = BlockType.Air;
+                    _blockDataNeighbor.facePerDirection.Clear();
                     if (!_blockDataNeighbor.owner.blockRender.Remove(_blockDataNeighbor))
                     {
                         Debug.LogWarning("Failed Remove!!!");
@@ -192,22 +193,28 @@ public class ChunkFinal : MonoBehaviour
         {
             Debug.LogError("Failed Remove!!!");
         }
+        _blockData.facePerDirection.Clear();
         meshData.ResetVerticesAndTriangles();
         List<ChunkFinal> chunksToUpdate = new List<ChunkFinal>();
         chunksToUpdate.Add(this);
         foreach (var item in _blockData.blocksNeighbor)
         {
-            if (item.Value.blockType == BlockType.Air)
+            BlockData _blockDataNeighbor = item.Value;
+            ChunkFinal _chunkFinal = _blockDataNeighbor.owner;
+            if (_blockDataNeighbor.blockType == BlockType.Air)
             {
-                item.Value.owner.blockRender.Add(item.Value);
-                item.Value.blockType = BlockType.Grass_Dirt; 
+                _chunkFinal.blockRender.Add(_blockDataNeighbor);
+                _blockDataNeighbor.blockType = BlockType.Grass_Dirt;
             }
-            if (!chunksToUpdate.Contains(item.Value.owner))
-                chunksToUpdate.Add(item.Value.owner);
+            if (!chunksToUpdate.Contains(_chunkFinal))
+                chunksToUpdate.Add(_chunkFinal);
         }
         int _count = chunksToUpdate.Count;
         for (int i = 0; i < _count; i++)
+        {
+            chunksToUpdate[i].meshData.ResetVerticesAndTriangles();
             chunksToUpdate[i].RenderMesh();
+        }
     }
 
     public void RunThroughAllBlocks(Action<Vector3Int> _blockPos)

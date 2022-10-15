@@ -9,10 +9,14 @@ public class FpsDisplay : MonoBehaviour
     float tempDeltaTime;
     float minFps = int.MaxValue;
     float maxFps = 0;
-
+    bool start = false;
     private void Update()
     {
-        if (FindObjectOfType<Player>().gravityScale == 0) return;
+        if(!start)
+        {
+            start = FindObjectOfType<Player>().gravityScale != 0;
+            return;
+        }
         tempDeltaTime += (Time.deltaTime - tempDeltaTime) * 0.1f;
         float fps = 1.0f / tempDeltaTime;
         fps = Mathf.Ceil(fps);
@@ -20,9 +24,17 @@ public class FpsDisplay : MonoBehaviour
             minFps = fps;
 
         if (maxFps < fps)
+        {
             maxFps = fps;
-        minFpsText.text = "Min Fps :" + minFps.ToString();
-        maxFpsText.text = "Max Fps :" + maxFps.ToString();
-        fpsText.text = "Current Fps :" + Mathf.Ceil(fps).ToString();
+            CancelInvoke();
+            Invoke("ResetMaxFps", 5);
+        }
+        minFpsText.text = "Min Fps :" + minFps;
+        maxFpsText.text = "Max Fps :" + maxFps;
+        fpsText.text = "Current Fps :" + Mathf.Ceil(fps);
+    }
+    void ResetMaxFps()
+    {
+        maxFps = 0;
     }
 }

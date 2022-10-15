@@ -27,6 +27,7 @@ public class BlockManager : Singleton<BlockManager>
     }
     public Vector3Int GetBlockPositionWorldFromBlock(BlockData _block)
     {
+        if (!_block) return new Vector3Int();
         Vector3Int _blockWorldPos = _block.owner.WorldPosition + _block.positionBlock;
         return _blockWorldPos;
     }

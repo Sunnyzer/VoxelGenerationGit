@@ -1,6 +1,8 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using UnityEngine.XR;
 
 public class Player : MonoBehaviour
@@ -18,6 +20,10 @@ public class Player : MonoBehaviour
     [SerializeField] Transform orientation = null;
     [SerializeField] int radius = 3;
     [SerializeField] float cooldownBreakMax;
+    [SerializeField] Slider radiusSlider;
+    [SerializeField] Slider cooldownSlider;
+    [SerializeField] TextMeshProUGUI radiusText;
+    [SerializeField] TextMeshProUGUI cooldownText;
     Vector3 forwardOrientation;
     Vector3 rightOrientation;
     Vector3 pointPoint;
@@ -37,19 +43,34 @@ public class Player : MonoBehaviour
     }
     private void Update()
     {
+        radius = (int)radiusSlider.value;
+        cooldownBreakMax = cooldownSlider.value;
+        radiusText.text = radius.ToString();
+        cooldownText.text = cooldownBreakMax.ToString();
         forwardOrientation = new Vector3(orientation.forward.x, 0, orientation.forward.z);
         rightOrientation = new Vector3(orientation.right.x, 0, orientation.right.z);
         velocity = Input.GetAxisRaw("Horizontal") * rightOrientation + Input.GetAxisRaw("Vertical") * forwardOrientation;
         rb.velocity = velocity.normalized * moveSpeed + new Vector3(0, rb.velocity.y, 0);
         Collider[] _colliders = Physics.OverlapBox(transform.position - transform.up * height, Vector3.one * sizeFeetDetection, Quaternion.identity, groundLayer);
         isGrounded = _colliders.Length != 0;
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (Input.GetKey(KeyCode.LeftAlt))
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        else
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+        if (isGrounded && Input.GetKeyDown(KeyCode.Space))
             rb.AddForce(Vector3.up * jumpHigh, ForceMode.Impulse);
         if (!isGrounded)
             rb.AddForce(Vector3.down * gravityScale);
         else if (velocity.y < 0)
             rb.velocity = new Vector3(velocity.x, 0, velocity.z);
-        bool _hit = Physics.Raycast(Camera.main.transform.position, orientation.forward, out RaycastHit _raycastHit, 100, groundLayer);
+
+        bool _hit = Physics.Raycast(Camera.main.transform.position, orientation.forward, out RaycastHit _raycastHit, 1000, groundLayer);
         Debug.DrawRay(Camera.main.transform.position, orientation.forward * 100, Color.red);
         cooldownBreak += Time.deltaTime;
         if (!_hit) return;
