@@ -23,6 +23,8 @@ public class BlockData
         bool _addSucceed = !facePerDirection.Keys.Contains(_direction);
         if (_addSucceed)
             facePerDirection.Add(_direction, _face);
+        else
+            facePerDirection[_direction] = _face;
         return _addSucceed;
     }
     public void SetNeighbor(ChunkFinal _chunk)

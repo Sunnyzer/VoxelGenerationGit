@@ -10,10 +10,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
 
     public WorldParam WorldParam => worldParam;
 
-    private IEnumerator Start()
-    {
-        yield return GenerateChunks();
-    }
+    private IEnumerator Start() => GenerateChunks();
 
     IEnumerator GenerateChunks()
     {
@@ -55,7 +52,9 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
     
     public ChunkFinal GetChunkFromWorldPosition(float _worldPosX, float _worldPosY, float _worldPosZ)
     {
-        return null;
+        int x = Mathf.RoundToInt(_worldPosX) / (worldParam.chunkSize);
+        int z = Mathf.RoundToInt(_worldPosZ) / (worldParam.chunkSize);
+        return chunks[x, z];
     }
     public ChunkFinal GetChunkFromWorldPosition(Vector3 _worldPos)
     {

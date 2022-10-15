@@ -93,9 +93,9 @@ public class ChunkFinal : MonoBehaviour
         {
             if (item.Value.blockType != BlockType.Air) continue;
             Vector3 _direction = item.Key;
-            Vector3 _faceCenter = _block.positionBlock + _direction * (chunkParam.sizeBlock * 0.5f);
+            Vector3 _faceCenter = _block.positionBlock + _direction * 0.5f;
             Face _faceAddToMesh = meshData.AddFace(_faceCenter, item.Key);
-            _block.AddNewFace(item.Key, _faceAddToMesh);
+            //_block.AddNewFace(item.Key, _faceAddToMesh);
         }
     }
 
@@ -103,9 +103,45 @@ public class ChunkFinal : MonoBehaviour
     {
 
     }
-    void DestroyWorldPositionBlock(Vector3 _blockPos)
+    public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
-
+        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
+        if(!blockRender.Remove(_blockData))
+        {
+            Debug.LogError("Failed Remove!!!");
+        }
+        meshData.ResetVerticesAndTriangles();
+        foreach (var item in _blockData.blocksNeighbor)
+        {
+            if (item.Value.blockType == BlockType.Air)
+            {
+                blockRender.Add(item.Value);
+                item.Value.blockType = BlockType.Grass_Dirt; 
+            }
+        }
+        int _count = blockRender.Count;
+        for (int i = 0; i < _count; i++)
+            BlockRenderFace(blockRender[i]);
+        meshData.UpdateMesh(meshCollider, meshFilter);
+    }
+    public void DestroyWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
+    {
+        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
+        _blockData.blockType = BlockType.Air;
+        if (!blockRender.Remove(_blockData))
+        {
+            Debug.LogError("Failed Remove!!!");
+        }
+        meshData.ResetVerticesAndTriangles();
+        foreach (var item in _blockData.blocksNeighbor)
+        {
+            if (item.Value.blockType != BlockType.Air && !blockRender.Contains(item.Value))
+                blockRender.Add(item.Value);
+        }
+        int _count = blockRender.Count;
+        for (int i = 0; i < _count; i++)
+            BlockRenderFace(blockRender[i]);
+        meshData.UpdateMesh(meshCollider, meshFilter);
     }
     void RecalculateMesh()
     {
@@ -113,7 +149,7 @@ public class ChunkFinal : MonoBehaviour
     }
     void UpdateVerticesAndTriangles()
     {
-
+        
     }
 
     public void RunThroughAllBlocks(Action<Vector3Int> _blockPos)
@@ -143,17 +179,12 @@ public class ChunkFinal : MonoBehaviour
         Gizmos.color = Color.black;
         Gizmos.DrawWireMesh(meshData.Mesh, transform.position);
         blockData = blocks[pos.x, pos.y, pos.z];
-        meshData.DebugMesh();
         if (!blockData) return;
         Gizmos.DrawCube(BlockManager.Instance.GetBlockPositionWorldFromBlock(blockData), Vector3.one);
         foreach (var item in blockData.blocksNeighbor)
-        {
             Gizmos.DrawCube(BlockManager.Instance.GetBlockPositionWorldFromBlock(item.Value), Vector3.one);
-        }
+        Gizmos.color = Color.red;
         foreach (var item in neighborChunk)
-        {
-            Gizmos.color = Color.red;
             Gizmos.DrawWireMesh(item.Value.meshData.Mesh, item.Value.transform.position);
-        }
     }
 }

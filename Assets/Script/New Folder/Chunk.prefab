@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 8163199132685333238}
   - component: {fileID: 7151405202984722055}
   - component: {fileID: 5597668264448674081}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Chunk
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -69,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -3033667219593020291, guid: a689f65940316bb4495c98d1a70c5a98, type: 3}
+  - {fileID: 2100000, guid: 127852d13e11b704aa2a8e4c2004fe6b, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -114,10 +114,23 @@ MonoBehaviour:
   meshCollider: {fileID: 4026309290782712342}
   meshFilter: {fileID: 7151405202984722055}
   meshRenderer: {fileID: 8163199132685333238}
-  indexChunk: {x: 0, y: 0}
   meshData:
     vertices: []
     triangles: 
     uvs: []
+    verticesNormal:
+      dic: []
+      vertices: []
+      normal: []
     normals: []
-    owner: {fileID: 5597668264448674081}
+  blockData:
+    positionBlock: {x: 0, y: 0, z: 0}
+    owner: {fileID: 0}
+    blockType: 0
+  pos: {x: 0, y: 0, z: 0}
+  chunkParam:
+    chunkSize: 0
+    chunkHeight: 0
+    sizeBlock: 0
+    indexChunk: {x: 0, y: 0}
+  blockRender: []

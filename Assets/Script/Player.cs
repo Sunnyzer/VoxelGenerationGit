@@ -17,17 +17,18 @@ public class Player : MonoBehaviour
     [SerializeField] float gravityScale = 1f;
     [SerializeField] Transform orientation = null;
     [SerializeField] int radius = 3;
+    [SerializeField] float cooldownBreakMax;
     Vector3 forwardOrientation;
     Vector3 rightOrientation;
-    Vector3Int pointCube;
     Vector3 pointPoint;
+    Vector3Int pointCube;
     bool isGrounded = false;
     bool isPressedRight = false;
     bool isPressedLeft = false;
     float cooldownBreak;
     float radiusCube = 1;
-    Block pointBlockData;
-    [SerializeField]float cooldownBreakMax;
+    BlockData pointBlockData;
+
     private void Start()
     {
         float tempGravityScale = gravityScale;
@@ -52,47 +53,16 @@ public class Player : MonoBehaviour
         Debug.DrawRay(Camera.main.transform.position, orientation.forward * 100, Color.red);
         cooldownBreak += Time.deltaTime;
         if (!_hit) return;
-        OldChunk _chunk = _raycastHit.collider.GetComponent<OldChunk>();
-        Chunk _testRenderer = _raycastHit.collider.GetComponent<Chunk>();
-        MeshChunk _chunkMesh = _raycastHit.collider.GetComponent<MeshChunk>();
-        pointCube = _testRenderer.GetBlockInChunkFromWorldLocationAndNormal(_raycastHit.point, _raycastHit.normal);
+        ChunkFinal _chunk = _raycastHit.collider.GetComponent<ChunkFinal>();
         pointPoint = _raycastHit.point;
-        Vector3Int _posChunk = new Vector3Int(Mathf.RoundToInt(_testRenderer.transform.position.x), Mathf.RoundToInt(_testRenderer.transform.position.y), Mathf.RoundToInt(_testRenderer.transform.position.z));
-        pointBlockData = ChunkManager.Instance.GetBlockDataFromWorldPosition(_posChunk + pointCube);
         if (_chunk)
         {
             if (cooldownBreak >= cooldownBreakMax)
             {
-                //pointCube = _chunk.GetPositionBlockFromWorldPosition(_raycastHit.point, _raycastHit.normal);
                 if (Input.GetMouseButton(0))
-                    _chunk.DestroyBlock(pointCube);
+                    _chunk.DestroyWorldPositionBlock(pointPoint, _raycastHit.normal);
                 if (Input.GetMouseButton(1))
-                    _chunk.DestroyBlockProfondeur(pointCube, radius);
-                cooldownBreak = 0;
-            }
-        }
-        else if(_testRenderer)
-        {
-            radiusCube = _testRenderer.SizeBlock;
-            cooldownBreak += Time.deltaTime;
-            if (cooldownBreak >= cooldownBreakMax)
-            {
-                if (Input.GetMouseButton(0))
-                    _testRenderer.DestroyBlock(_raycastHit.point, _raycastHit.normal);
-                if (Input.GetMouseButton(1))
-                    _testRenderer.DestroyMultiBlock(_raycastHit.point, _raycastHit.normal, radius);
-                cooldownBreak = 0;
-            }
-        }
-        else if (_chunkMesh)
-        {
-            cooldownBreak += Time.deltaTime;
-            if (cooldownBreak >= cooldownBreakMax)
-            {
-                if (Input.GetMouseButton(0))
-                    _chunkMesh.DestroyBlock(_raycastHit.point, _raycastHit.normal);
-                if (Input.GetMouseButton(1))
-                    _chunkMesh.DestroyMultiBlock(_raycastHit.point, _raycastHit.normal, radius);
+                    _chunk.CreateWorldPositionBlock(pointPoint, _raycastHit.normal);
                 cooldownBreak = 0;
             }
         }
@@ -103,14 +73,14 @@ public class Player : MonoBehaviour
         Gizmos.color = Color.blue;
         Gizmos.DrawWireCube(pointPoint, Vector3.one * 0.1f);
         Gizmos.color = Color.red;
-        Gizmos.DrawWireCube(pointCube, Vector3.one * ChunkManager.sizeBlock);
+        Gizmos.DrawWireCube(pointCube, Vector3.one * 1);
         Gizmos.color = Color.magenta;
         if(pointBlockData)
         {
             foreach (var item in pointBlockData.blocksNeighbor)
             {
                 Vector3 _direction = item.Key;
-                Vector3 _posCube = item.Value.owner.transform.position + pointCube + _direction * ChunkManager.sizeBlock;
+                Vector3 _posCube = item.Value.owner.transform.position + pointCube + _direction;
                 Gizmos.DrawWireCube( _posCube, Vector3.one * ChunkManager.sizeBlock);
             }
         }
