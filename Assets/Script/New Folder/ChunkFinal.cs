@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 [Serializable]
@@ -101,23 +102,33 @@ public class ChunkFinal : MonoBehaviour
 
     void DestroyWorldPositionRadius(Vector3 _blockPos, int radius)
     {
-
-    }
-    public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
-    {
-        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
-        if(!blockRender.Remove(_blockData))
+        List<BlockData> _toRender = new List<BlockData>();
+        Vector3Int _blockWorldPos = BlockManager.Instance.GetBlockPositionWorldFromWorldPosition(_blockPos);
+        for (int x = -radius; x < radius; x++)
         {
-            Debug.LogError("Failed Remove!!!");
+            for (int z = -radius; z < radius; z++)
+            {
+                for (int y = -radius; y < radius; y++)
+                {
+                    Vector3Int _blockDataPos = _blockWorldPos - new Vector3Int(x,y,z);
+                    BlockData _blockData = BlockManager.Instance.GetBlockFromBlockWorldPosition(_blockDataPos);
+                    _blockData.blockType = BlockType.Air;
+                    if (!_blockData.owner.blockRender.Remove(_blockData))
+                    {
+                        Debug.LogError("Failed Remove!!!");
+                    }
+                    if(x == -radius && y == -radius && z == -radius)
+                    {
+                        _toRender.Add(_blockData);
+                    }
+                }
+            }
         }
         meshData.ResetVerticesAndTriangles();
-        foreach (var item in _blockData.blocksNeighbor)
+        for (int i = 0; i < _toRender.Count; i++)
         {
-            if (item.Value.blockType == BlockType.Air)
-            {
-                blockRender.Add(item.Value);
-                item.Value.blockType = BlockType.Grass_Dirt; 
-            }
+            if (_toRender[i].blockType != BlockType.Air && !blockRender.Contains(_toRender[i]))
+                blockRender.Add(_toRender[i]);
         }
         int _count = blockRender.Count;
         for (int i = 0; i < _count; i++)
@@ -137,6 +148,27 @@ public class ChunkFinal : MonoBehaviour
         {
             if (item.Value.blockType != BlockType.Air && !blockRender.Contains(item.Value))
                 blockRender.Add(item.Value);
+        }
+        int _count = blockRender.Count;
+        for (int i = 0; i < _count; i++)
+            BlockRenderFace(blockRender[i]);
+        meshData.UpdateMesh(meshCollider, meshFilter);
+    }
+    public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
+    {
+        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
+        if(!blockRender.Remove(_blockData))
+        {
+            Debug.LogError("Failed Remove!!!");
+        }
+        meshData.ResetVerticesAndTriangles();
+        foreach (var item in _blockData.blocksNeighbor)
+        {
+            if (item.Value.blockType == BlockType.Air)
+            {
+                blockRender.Add(item.Value);
+                item.Value.blockType = BlockType.Grass_Dirt; 
+            }
         }
         int _count = blockRender.Count;
         for (int i = 0; i < _count; i++)
