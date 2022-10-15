@@ -1,8 +1,10 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
 public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
 {
+    public event Action OnFinishLoad = null;
     [SerializeField] WorldParam worldParam;
     [SerializeField] ChunkFinal chunksPrefab;
     [SerializeField] Vector2Int offset;
@@ -17,6 +19,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         yield return CreateChunks();
         yield return InitChunks();
         yield return RenderChunks();
+        OnFinishLoad?.Invoke();
     }
     IEnumerator CreateChunks()
     {
@@ -54,7 +57,9 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
     {
         int x = Mathf.RoundToInt(_worldPosX) / (worldParam.chunkSize);
         int z = Mathf.RoundToInt(_worldPosZ) / (worldParam.chunkSize);
-        return chunks[x, z];
+        if(IsIndexChunkInChunkManager(x, z))
+            return chunks[x, z];
+        return null;
     }
     public ChunkFinal GetChunkFromWorldPosition(Vector3 _worldPos)
     {

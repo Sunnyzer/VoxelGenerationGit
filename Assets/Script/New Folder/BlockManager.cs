@@ -7,13 +7,17 @@ public class BlockManager : Singleton<BlockManager>
         ChunkFinal _chunk = ChunkManagerFinal.Instance.GetChunkFromWorldPosition(_blockWorldPos);
         Vector3 _blockPos = _blockWorldPos - _chunk.transform.position - _normal * 0.5f;
         Vector3Int _blockChunkPos = new Vector3Int(Mathf.RoundToInt(_blockPos.x), Mathf.RoundToInt(_blockPos.y), Mathf.RoundToInt(_blockPos.z));
-        BlockData _blockData = _chunk.Blocks[_blockChunkPos.x, _blockChunkPos.y, _blockChunkPos.z];
+        BlockData _blockData = null;
+        if (_chunk.IsBlockPosInChunk(_blockChunkPos))
+            _blockData = _chunk.Blocks[_blockChunkPos.x, _blockChunkPos.y, _blockChunkPos.z];
         return _blockData;
     }
     public BlockData GetBlockFromBlockWorldPosition(Vector3Int _blockWorldPos)
     {
         ChunkFinal _chunk = ChunkManagerFinal.Instance.GetChunkFromWorldPosition(_blockWorldPos);
+        if (!_chunk) return null;
         Vector3Int _blockChunkPos = _blockWorldPos - _chunk.WorldPosition;
+        if(!_chunk.IsBlockPosInChunk(_blockChunkPos)) return null;
         BlockData _blockData = _chunk.Blocks[_blockChunkPos.x, _blockChunkPos.y, _blockChunkPos.z];
         return _blockData;
     }

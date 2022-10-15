@@ -32,8 +32,8 @@ public class Player : MonoBehaviour
     private void Start()
     {
         float tempGravityScale = gravityScale;
-        //gravityScale = 0;
-        //ChunkManager.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
+        gravityScale = 0;
+        ChunkManagerFinal.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
     }
     private void Update()
     {
@@ -63,6 +63,8 @@ public class Player : MonoBehaviour
                     _chunk.DestroyWorldPositionBlock(pointPoint, _raycastHit.normal);
                 if (Input.GetMouseButton(1))
                     _chunk.CreateWorldPositionBlock(pointPoint, _raycastHit.normal);
+                if (Input.GetMouseButton(2))
+                    _chunk.DestroyWorldPositionRadius(pointPoint, _raycastHit.normal, radius);
                 cooldownBreak = 0;
             }
         }

@@ -34,6 +34,7 @@ public class ChunkManager : MonoBehaviour
         sizeBlock = chunkParam.sizeBlock;
         yield return GenerateMap();
     }
+
     public Block GetBlockDataFromWorldPosition(Vector3Int _posBlock)
     {
         Vector2Int _chunkPosBlock = GetChunkIndexFromWorldPosition(_posBlock);

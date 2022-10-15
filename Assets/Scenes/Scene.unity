@@ -234,10 +234,10 @@ MonoBehaviour:
     chunkSize: 16
     chunkHeight: 100
     chunkAmount: 4
-    octaves: 2
+    octaves: 3
     sizeBlock: 1
     amplitude: 0.5
-    frequence: 0.005
+    frequence: 0.015
     lacunarity: 2
     persistence: 0.5
   chunksPrefab: {fileID: 5597668264448674081, guid: a9b0c11615b53f949bb8c5053d07c4aa, type: 3}
@@ -355,6 +355,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1698728129, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.696
+      objectReference: {fileID: 0}
+    - target: {fileID: 1698728129, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.27
+      objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074746, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: m_RootOrder
       value: 2
@@ -365,7 +373,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074746, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 120
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074746, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: m_LocalPosition.z
@@ -404,8 +412,12 @@ PrefabInstance:
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: radius
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: cooldownBreakMax
-      value: 0.1
+      value: 0.05
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}

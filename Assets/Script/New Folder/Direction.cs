@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,5 +20,10 @@ public static class Direction
         Vector3Int.up,
         Vector3Int.down
     };
-
+    public static void RunThroughAllDirection2D(Action<Vector2Int> _action)
+    {
+        int _count = direction2D.Count;
+        for (int i = 0; i < _count; i++)
+            _action?.Invoke(direction2D[i]);
+    }
 }
