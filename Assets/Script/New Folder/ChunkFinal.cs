@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 [Serializable]
 public struct ChunkParamFinal
@@ -81,11 +82,15 @@ public class ChunkFinal : MonoBehaviour
     }
     public IEnumerator UpdateMesh()
     {
+        RenderMesh();
+        yield return null;
+    }
+    public void RenderMesh()
+    {
         int _count = blockRender.Count;
         for (int i = 0; i < _count; i++)
             BlockRenderFace(blockRender[i]);
         meshData.UpdateMesh(meshCollider, meshFilter);
-        yield return null;
     }
     void BlockRenderFace(BlockData _block)
     {
@@ -144,15 +149,20 @@ public class ChunkFinal : MonoBehaviour
             Debug.LogError("Failed Remove!!!");
         }
         meshData.ResetVerticesAndTriangles();
+        List<ChunkFinal> chunksToUpdate = new List<ChunkFinal>();
+        chunksToUpdate.Add(this);
         foreach (var item in _blockData.blocksNeighbor)
         {
-            if (item.Value.blockType != BlockType.Air && !blockRender.Contains(item.Value))
-                blockRender.Add(item.Value);
+            if (item.Value.blockType != BlockType.Air && !item.Value.owner.blockRender.Contains(item.Value))
+            {
+                item.Value.owner.blockRender.Add(item.Value);
+            }
+            if(!chunksToUpdate.Contains(item.Value.owner))
+                chunksToUpdate.Add(item.Value.owner);
         }
-        int _count = blockRender.Count;
+        int _count = chunksToUpdate.Count;
         for (int i = 0; i < _count; i++)
-            BlockRenderFace(blockRender[i]);
-        meshData.UpdateMesh(meshCollider, meshFilter);
+            chunksToUpdate[i].RenderMesh();
     }
     public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
@@ -162,18 +172,21 @@ public class ChunkFinal : MonoBehaviour
             Debug.LogError("Failed Remove!!!");
         }
         meshData.ResetVerticesAndTriangles();
+        List<ChunkFinal> chunksToUpdate = new List<ChunkFinal>();
+        chunksToUpdate.Add(this);
         foreach (var item in _blockData.blocksNeighbor)
         {
             if (item.Value.blockType == BlockType.Air)
             {
-                blockRender.Add(item.Value);
+                item.Value.owner.blockRender.Add(item.Value);
                 item.Value.blockType = BlockType.Grass_Dirt; 
             }
+            if (!chunksToUpdate.Contains(item.Value.owner))
+                chunksToUpdate.Add(item.Value.owner);
         }
-        int _count = blockRender.Count;
+        int _count = chunksToUpdate.Count;
         for (int i = 0; i < _count; i++)
-            BlockRenderFace(blockRender[i]);
-        meshData.UpdateMesh(meshCollider, meshFilter);
+            chunksToUpdate[i].RenderMesh();
     }
     void RecalculateMesh()
     {
