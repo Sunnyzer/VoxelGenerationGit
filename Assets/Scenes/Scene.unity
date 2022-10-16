@@ -1987,6 +1987,10 @@ PrefabInstance:
       propertyPath: cooldownSlider
       value: 
       objectReference: {fileID: 234441954}
+    - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: playerLayer.m_Bits
+      value: 64
+      objectReference: {fileID: 0}
     - target: {fileID: 8077752294914834505, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: m_Layer
       value: 6
