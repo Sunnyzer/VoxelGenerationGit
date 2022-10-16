@@ -465,7 +465,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f04d37d2fc8d6f4ca1b525cc5398293, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textureOffset: 0
+  textureOffset: 0.001
   tileSizeX: 0
   tileSizeY: 0
   textureData: {fileID: 11400000, guid: d3f89e1ec812e1a47ac9533d212de1b3, type: 2}
@@ -1903,22 +1903,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1698728129, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0.696
-      objectReference: {fileID: 0}
-    - target: {fileID: 1698728129, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0.27
-      objectReference: {fileID: 0}
-    - target: {fileID: 1698728131, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
-      propertyPath: m_CullingMask.m_Bits
-      value: 59
-      objectReference: {fileID: 0}
-    - target: {fileID: 2707694786280996533, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
-      propertyPath: m_Layer
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074746, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: m_RootOrder
       value: 2
@@ -1968,8 +1952,12 @@ PrefabInstance:
       value: Player
       objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
-      propertyPath: radius
-      value: 4
+      propertyPath: height
+      value: 0.62
+      objectReference: {fileID: 0}
+    - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: jumpHigh
+      value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: radiusText
@@ -1987,10 +1975,6 @@ PrefabInstance:
       propertyPath: cooldownSlider
       value: 
       objectReference: {fileID: 234441954}
-    - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
-      propertyPath: cooldownBreakMax
-      value: 0.05
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
 --- !u!1 &1768512601

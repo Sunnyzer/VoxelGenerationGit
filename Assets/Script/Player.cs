@@ -64,7 +64,7 @@ public class Player : MonoBehaviour
             Cursor.lockState = CursorLockMode.Locked;
         }
         if (isGrounded && Input.GetKeyDown(KeyCode.Space))
-            rb.AddForce(Vector3.up * jumpHigh, ForceMode.Impulse);
+            rb.AddForce(Vector3.up * jumpHigh * Time.deltaTime, ForceMode.Impulse);
         if (!isGrounded)
             rb.AddForce(Vector3.down * gravityScale);
         else if (velocity.y < 0)
@@ -92,20 +92,12 @@ public class Player : MonoBehaviour
     }
     private void OnDrawGizmos()
     {
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireCube(transform.position - transform.up * height, Vector3.one * sizeFeetDetection);
         if (!Application.isPlaying) return;
         Gizmos.color = Color.blue;
         Gizmos.DrawWireCube(pointPoint, Vector3.one * 0.1f);
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(pointCube, Vector3.one * 1);
-        Gizmos.color = Color.magenta;
-        if(pointBlockData)
-        {
-            foreach (var item in pointBlockData.blocksNeighbor)
-            {
-                Vector3 _direction = item.Key;
-                Vector3 _posCube = item.Value.owner.transform.position + pointCube + _direction;
-                Gizmos.DrawWireCube( _posCube, Vector3.one * ChunkManager.sizeBlock);
-            }
-        }
     }
 }

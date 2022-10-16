@@ -70,7 +70,7 @@ public class ChunkFinal : MonoBehaviour
     }
     public IEnumerator InitChunks()
     {
-        Direction.RunThroughAllDirection2D(AddNeighborChunk);
+        Direction.RunThroughAllDirection2D(AddNeighborChunkFromDirection);
         RunThroughAllBlocks((_blockPos) =>
         {
             BlockData _blockData = blocks[_blockPos.x, _blockPos.y, _blockPos.z];
@@ -85,7 +85,7 @@ public class ChunkFinal : MonoBehaviour
         });
         yield return null;
     }
-    void AddNeighborChunk(Vector2Int _direction)
+    void AddNeighborChunkFromDirection(Vector2Int _direction)
     {
         Vector2Int _indexChunk = chunkParam.indexChunk + _direction;
         ChunkFinal _chunkNeighbor = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(_indexChunk);
@@ -176,14 +176,19 @@ public class ChunkFinal : MonoBehaviour
         chunksToUpdate.Add(this);
         foreach (var item in _blockData.blocksNeighbor)
         {
-            if (item.Value.blockType != BlockType.Air && !item.Value.owner.blockRender.Contains(item.Value))
-                item.Value.owner.blockRender.Add(item.Value);
-            if(!chunksToUpdate.Contains(item.Value.owner))
-                chunksToUpdate.Add(item.Value.owner);
+            BlockData _blockDataNeighbor = item.Value;
+            ChunkFinal _chunk = _blockDataNeighbor.owner;
+            if (_blockDataNeighbor.blockType != BlockType.Air && !_chunk.blockRender.Contains(item.Value))
+                _chunk.blockRender.Add(_blockDataNeighbor);
+            if(!chunksToUpdate.Contains(_chunk))
+                chunksToUpdate.Add(_chunk);
         }
         int _count = chunksToUpdate.Count;
-        for (int i = 0; i < _count; i++)
+        for (int i = 0; i < _count; i++) 
+        {
+            chunksToUpdate[i].meshData.ResetVerticesAndTriangles();
             chunksToUpdate[i].RenderMesh();
+        }
     }
     public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
