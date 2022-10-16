@@ -458,7 +458,7 @@ MonoBehaviour:
     sizeBlock: 0
   chunksPrefab: {fileID: 5597668264448674081, guid: a9b0c11615b53f949bb8c5053d07c4aa, type: 3}
   offset: {x: 0, y: 0}
-  viewFrustrum: -0.1
+  viewFrustrum: -0.3
 --- !u!114 &139201779
 MonoBehaviour:
   m_ObjectHideFlags: 0
