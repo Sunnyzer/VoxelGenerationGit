@@ -22,15 +22,7 @@ public class BlockManager : Singleton<BlockManager>
         tileSizeX = textureData.textureSizeX;
         tileSizeY = textureData.textureSizeY;
     }
-    public EDirection GetEDirectionFromVector3Int(Vector3Int _direction)
-    {
-        if (_direction == Vector3Int.up)
-            return EDirection.Up;
-        else if (_direction == Vector3Int.down)
-            return EDirection.Down;
-        else
-            return EDirection.Side;
-    }
+
     public Vector2Int TexturePosition(Vector3Int _direction, BlockType _blockType)
     {
         return blockTextureDataDictionary[_blockType][GetEDirectionFromVector3Int(_direction)];
@@ -54,6 +46,16 @@ public class BlockManager : Singleton<BlockManager>
         //0,0.1
         //2 1 0, 1 3 0
         return UVs;
+    }
+    
+    public EDirection GetEDirectionFromVector3Int(Vector3Int _direction)
+    {
+        if (_direction == Vector3Int.up)
+            return EDirection.Up;
+        else if (_direction == Vector3Int.down)
+            return EDirection.Down;
+        else
+            return EDirection.Side;
     }
     public BlockData GetBlockFromWorldPosition(Vector3 _blockWorldPos, Vector3 _normal)
     {

@@ -10,6 +10,12 @@ public class FpsDisplay : MonoBehaviour
     float minFps = int.MaxValue;
     float maxFps = 0;
     bool start = false;
+    private void Start()
+    {
+        fpsText.gameObject.SetActive(false);
+        minFpsText.gameObject.SetActive(false);
+        maxFpsText.gameObject.SetActive(false);
+    }
     private void Update()
     {
         if(!start)
@@ -17,6 +23,9 @@ public class FpsDisplay : MonoBehaviour
             start = FindObjectOfType<Player>().gravityScale != 0;
             return;
         }
+        fpsText.gameObject.SetActive(true);
+        minFpsText.gameObject.SetActive(true);
+        maxFpsText.gameObject.SetActive(true);
         tempDeltaTime += (Time.deltaTime - tempDeltaTime) * 0.1f;
         float fps = 1.0f / tempDeltaTime;
         fps = Mathf.Ceil(fps);

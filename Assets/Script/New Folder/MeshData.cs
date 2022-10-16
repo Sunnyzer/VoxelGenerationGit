@@ -1,69 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using System.Linq;
-using JetBrains.Annotations;
-using System.Runtime.CompilerServices;
-using UnityEngine.UIElements;
-using UnityEngine.Assertions.Must;
-
-[Serializable]
-public class Test<T>
-{
-    public Vector3 key;
-    public T value;
-    public Test(Vector3 _key, T _value)
-    {
-        key = _key;
-        value = _value;
-    }
-}
-[Serializable]
-public class Dic<T>
-{
-    public List<Test<T>> dic = new List<Test<T>>();
-    public List<Vector3> vertices = new List<Vector3>();
-    public List<T> normal = new List<T>();
-
-    public bool Contains(Vector3 _vertex)
-    {
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            if (Vector3.Distance(vertices[i], _vertex) < 0.1f)
-                return true;
-        }
-        return false;
-    }
-    public int GetIndex(Vector3 _vertex)
-    {
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            if (Vector3.Distance(vertices[i], _vertex) < 0.1f)
-                return i;
-        }
-        return -1;
-    }
-    public T GetContains(Vector3 _vertex)
-    {
-        for (int i = 0; i < vertices.Count; i++)
-        {
-            if (Vector3.Distance(vertices[i], _vertex) < 0.1f)
-                return normal[i];
-        }
-        return default(T);
-    }
-    public void Add(Vector3 _vertex, T _normal)
-    {
-        dic.Add(new Test<T>(_vertex, _normal));
-        vertices.Add(_vertex);
-        normal.Add(_normal);
-    }
-    public T this[Vector3 _index]
-    {
-        get => GetContains(_index);
-        set => normal[GetIndex(_index)] = value;
-    }
-}
 
 [Serializable]
 public class MeshData
@@ -71,7 +8,6 @@ public class MeshData
     [SerializeField] List<Vector3> vertices = new List<Vector3>();
     [SerializeField] List<int> triangles = new List<int>();
     [SerializeField] List<Vector2> uvs = new List<Vector2>();
-    [SerializeField] Dic<Vector3> verticesNormal = new Dic<Vector3>();
 
     Mesh mesh;
     public Mesh Mesh => mesh;
