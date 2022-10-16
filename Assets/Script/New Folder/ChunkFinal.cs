@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static UnityEngine.Mesh;
 
 [Serializable]
 public struct ChunkParamFinal
@@ -110,8 +111,8 @@ public class ChunkFinal : MonoBehaviour
             if (item.Value.blockType != BlockType.Air) continue;
             Vector3 _direction = item.Key;
             Vector3 _faceCenter = _block.positionBlock + _direction * 0.5f;
-            Face _faceAddToMesh = meshData.AddFace(_faceCenter, item.Key);
-            //_block.AddNewFace(item.Key, _faceAddToMesh);
+            Face _faceAddToMesh = meshData.AddFace(_faceCenter, item.Key, _block.blockType);
+            _block.AddNewFace(item.Key, _faceAddToMesh);
         }
     }
 
@@ -132,8 +133,7 @@ public class ChunkFinal : MonoBehaviour
                     if ((_blockDataPos - _blockWorldPos).sqrMagnitude > radius * radius) continue;
                     BlockData _blockDataNeighbor = BlockManager.Instance.GetBlockFromBlockWorldPosition(_blockDataPos);
                     if (!_blockDataNeighbor || _blockDataNeighbor.blockType == BlockType.Air) continue;
-                    _blockDataNeighbor.blockType = BlockType.Air;
-                    _blockDataNeighbor.facePerDirection.Clear();
+                    _blockDataNeighbor.DestroyBlock();
                     if (!_blockDataNeighbor.owner.blockRender.Remove(_blockDataNeighbor))
                     {
                         Debug.LogWarning("Failed Remove!!!");
@@ -166,7 +166,7 @@ public class ChunkFinal : MonoBehaviour
     {
         BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
         if (!_blockData) return;
-        _blockData.blockType = BlockType.Air;
+        _blockData.DestroyBlock();
         if (!blockRender.Remove(_blockData))
         {
             Debug.LogError("Failed Remove!!!");
@@ -204,7 +204,10 @@ public class ChunkFinal : MonoBehaviour
             if (_blockDataNeighbor.blockType == BlockType.Air)
             {
                 _chunkFinal.blockRender.Add(_blockDataNeighbor);
-                _blockDataNeighbor.blockType = BlockType.Grass_Dirt;
+                BlockType _blockType = _blockData.blocksNeighbor[Vector3Int.down].blockType;
+                if (_blockType == BlockType.Air)
+                    _blockType = BlockType.Dirt;
+                _blockDataNeighbor.blockType = _blockType;
             }
             if (!chunksToUpdate.Contains(_chunkFinal))
                 chunksToUpdate.Add(_chunkFinal);

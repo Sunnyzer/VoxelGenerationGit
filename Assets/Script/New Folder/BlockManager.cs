@@ -1,7 +1,60 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BlockManager : Singleton<BlockManager>
 {
+    [SerializeField] float textureOffset = 0.001f;
+    [SerializeField] float tileSizeX;
+    [SerializeField] float tileSizeY;
+    [SerializeField] Dictionary<BlockType, TextureData> blockTextureDataDictionary = new Dictionary<BlockType, TextureData>();
+    public BlockDataSO textureData;
+
+    protected virtual void Awake()
+    {
+        base.Awake();
+        foreach (var item in textureData.textureDataList)
+        {
+            if(!blockTextureDataDictionary.ContainsKey(item.blockType))
+            {
+                blockTextureDataDictionary.Add(item.blockType, item);
+            }
+        }
+        tileSizeX = textureData.textureSizeX;
+        tileSizeY = textureData.textureSizeY;
+    }
+    public EDirection GetEDirectionFromVector3Int(Vector3Int _direction)
+    {
+        if (_direction == Vector3Int.up)
+            return EDirection.Up;
+        else if (_direction == Vector3Int.down)
+            return EDirection.Down;
+        else
+            return EDirection.Side;
+    }
+    public Vector2Int TexturePosition(Vector3Int _direction, BlockType _blockType)
+    {
+        return blockTextureDataDictionary[_blockType][GetEDirectionFromVector3Int(_direction)];
+    }
+    public Vector2[] FaceUVs(Vector3Int _direction, BlockType _blockType)
+    {
+        Vector2[] UVs = new Vector2[4];
+        Vector2Int _tilePos = TexturePosition(_direction, _blockType);
+
+        UVs[3] = new Vector2(tileSizeX * _tilePos.x + textureOffset,
+                             tileSizeY * _tilePos.y + textureOffset);
+        //0,0
+        UVs[2] = new Vector2(tileSizeX * _tilePos.x + tileSizeX - textureOffset,
+                             tileSizeY * _tilePos.y + textureOffset);
+        //0.1,0
+        UVs[1] = new Vector2(tileSizeX * _tilePos.x + tileSizeX - textureOffset,
+                             tileSizeY * _tilePos.y + tileSizeY - textureOffset);
+        //0.1,0.1
+        UVs[0] = new Vector2(tileSizeX * _tilePos.x + textureOffset,
+                             tileSizeY * _tilePos.y + tileSizeY - textureOffset);
+        //0,0.1
+        //2 1 0, 1 3 0
+        return UVs;
+    }
     public BlockData GetBlockFromWorldPosition(Vector3 _blockWorldPos, Vector3 _normal)
     {
         ChunkFinal _chunk = ChunkManagerFinal.Instance.GetChunkFromWorldPosition(_blockWorldPos);

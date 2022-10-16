@@ -443,11 +443,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   worldParam:
     chunkSize: 16
-    chunkHeight: 200
-    chunkAmount: 8
+    chunkHeight: 150
+    chunkAmount: 2
     octaves: 3
     sizeBlock: 1
-    amplitude: 0.8
+    amplitude: 0.7
     frequence: 0.015
     lacunarity: 2
     persistence: 0.5
@@ -465,6 +465,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f04d37d2fc8d6f4ca1b525cc5398293, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  textureOffset: 0
+  tileSizeX: 0
+  tileSizeY: 0
+  textureData: {fileID: 11400000, guid: d3f89e1ec812e1a47ac9533d212de1b3, type: 2}
 --- !u!1 &205832658
 GameObject:
   m_ObjectHideFlags: 0

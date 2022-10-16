@@ -13,7 +13,6 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
     public WorldParam WorldParam => worldParam;
 
     private IEnumerator Start() => GenerateChunks();
-
     IEnumerator GenerateChunks()
     {
         yield return CreateChunks();

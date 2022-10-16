@@ -44,7 +44,11 @@ public class BlockData
             }
         }
     }
-
+    public void DestroyBlock()
+    {
+        blockType = BlockType.Air;
+        facePerDirection.Clear();
+    }
     public static bool operator !(BlockData _blockData) => _blockData == null;
     public static implicit operator bool(BlockData _blockData) => _blockData != null;
 }

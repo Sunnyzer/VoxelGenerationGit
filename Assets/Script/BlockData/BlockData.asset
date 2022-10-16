@@ -22,7 +22,25 @@ MonoBehaviour:
     isSolid: 0
     generatesCollide: 0
   - blockType: 3
-    up: {x: 6, y: 8}
+    up: {x: 7, y: 4}
+    down: {x: 7, y: 4}
+    side: {x: 7, y: 4}
+    isSolid: 1
+    generatesCollide: 1
+  - blockType: 2
+    up: {x: 8, y: 9}
+    down: {x: 7, y: 4}
+    side: {x: 7, y: 5}
+    isSolid: 1
+    generatesCollide: 1
+  - blockType: 4
+    up: {x: 8, y: 9}
+    down: {x: 7, y: 4}
+    side: {x: 7, y: 5}
+    isSolid: 1
+    generatesCollide: 1
+  - blockType: 10
+    up: {x: 8, y: 9}
     down: {x: 7, y: 4}
     side: {x: 7, y: 5}
     isSolid: 1

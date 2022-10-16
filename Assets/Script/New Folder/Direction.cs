@@ -26,4 +26,10 @@ public static class Direction
         for (int i = 0; i < _count; i++)
             _action?.Invoke(direction2D[i]);
     }
+    public static void RunThroughAllDirection(Action<Vector3Int> _action)
+    {
+        int _count = allDirection.Count;
+        for (int i = 0; i < _count; i++)
+            _action?.Invoke(allDirection[i]);
+    }
 }
