@@ -6,19 +6,26 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
 {
     public event Action OnFinishLoad = null;
     [SerializeField] WorldParam worldParam;
+    [SerializeField] ChunkParamFinal chunkParam;
     [SerializeField] ChunkFinal chunksPrefab;
     [SerializeField] Vector2Int offset;
     ChunkFinal[,] chunks;
 
     public WorldParam WorldParam => worldParam;
+    public ChunkParamFinal ChunkParam => chunkParam;
 
-    private IEnumerator Start() => GenerateChunks();
+    private IEnumerator Start()
+    {
+        chunkParam = new ChunkParamFinal(worldParam.chunkSize, worldParam.chunkHeight, 1);
+        yield return GenerateChunks();
+    }
     IEnumerator GenerateChunks()
     {
         yield return CreateChunks();
         yield return InitChunks();
         yield return RenderChunks();
         OnFinishLoad?.Invoke();
+        Debug.Log("time : " + Time.time);
     }
     IEnumerator CreateChunks()
     {
@@ -30,8 +37,9 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
             for (int z = 0; z < _chunkAmount; z++)
             {
                 ChunkFinal _chunkFinal = Instantiate<ChunkFinal>(chunksPrefab, new Vector3(x * _chunkSize, 0, z * _chunkSize), Quaternion.identity, transform);
-                yield return _chunkFinal.GenerateBlocks(new ChunkParamFinal(worldParam.chunkSize, worldParam.chunkHeight, worldParam.sizeBlock,new Vector2Int(x,z)));
-                _chunkFinal.name = "Chunk" + (x + z * _chunkAmount); 
+                _chunkFinal.SetIndexChunk(x, z);
+                yield return _chunkFinal.GenerateBlocks();
+                _chunkFinal.name = "Chunk" + (z + x * _chunkAmount);
                 chunks[x, z] = _chunkFinal;
             }
         }
@@ -49,7 +57,8 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         int _chunkAmount = worldParam.chunkAmount;
         for (int x = 0; x < _chunkAmount; x++)
             for (int z = 0; z < _chunkAmount; z++)
-                yield return chunks[x, z].UpdateMesh();
+                chunks[x, z].UpdateMesh();
+        yield return null;
     }
     
     public ChunkFinal GetChunkFromWorldPosition(float _worldPosX, float _worldPosY, float _worldPosZ)

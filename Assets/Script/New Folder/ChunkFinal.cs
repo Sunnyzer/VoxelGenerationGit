@@ -1,10 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.Mesh;
 
 [Serializable]
 public struct ChunkParamFinal
@@ -12,13 +10,11 @@ public struct ChunkParamFinal
     public int chunkSize;
     public int chunkHeight;
     public float sizeBlock;
-    public Vector2Int indexChunk;
-    public ChunkParamFinal(int _chunkSize, int _chunkHeight, float _sizeBlock, Vector2Int _indexChunk)
+    public ChunkParamFinal(int _chunkSize, int _chunkHeight, float _sizeBlock)
     {
         chunkSize = _chunkSize;
         chunkHeight = _chunkHeight;
         sizeBlock = _sizeBlock;
-        indexChunk = _indexChunk;
     }
 }
 
@@ -32,29 +28,35 @@ public class ChunkFinal : MonoBehaviour
     [SerializeField] BlockData blockData;
     [SerializeField] Vector3Int pos;
     [SerializeField] ChunkParamFinal chunkParam;
+    [SerializeField] Vector2Int indexChunk;
 
     [SerializeField] List<BlockData> blockRender = new List<BlockData>();
     Dictionary<Vector2Int, ChunkFinal> neighborChunk = new Dictionary<Vector2Int, ChunkFinal>();
     BlockData[,,] blocks;
-
+    Thread threadGenerate;
     public BlockData[,,] Blocks => blocks;
     public Vector3Int WorldPosition => new Vector3Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.z));
     public int ChunkSize => chunkParam.chunkSize;
     public int ChunkHeight => chunkParam.chunkHeight;
 
-    public IEnumerator GenerateBlocks(ChunkParamFinal _chunkParam)
+    private void Awake()
     {
-        meshData = new MeshData(this);
-        chunkParam = _chunkParam;
+        meshData = new MeshData();
+        chunkParam = ChunkManagerFinal.Instance.ChunkParam;
+        blocks = new BlockData[chunkParam.chunkSize, chunkParam.chunkHeight, chunkParam.chunkSize];
+        //threadGenerate = new Thread(new ThreadStart(GenerateBlocks));
+    }
+    public void SetIndexChunk(int _x, int _z) => indexChunk = new Vector2Int(_x, _z);
+    public IEnumerator GenerateBlocks()
+    {
         int _chunkSize = chunkParam.chunkSize;
-        blocks = new BlockData[_chunkSize, chunkParam.chunkHeight, _chunkSize];
         for (int x = 0; x < _chunkSize; x++)
         {
             for (int z = 0; z < _chunkSize; z++)
             {
                 float _perlinNoise = ChunkManagerFinal.Instance.PerlinNoiseOctaves(WorldPosition.x + x, WorldPosition.z + z);
                 float _groundPos = Mathf.RoundToInt(_perlinNoise * chunkParam.chunkHeight);
-                for (int y = 0; y < chunkParam.chunkHeight; y++)
+                for (int y = 0; y < ChunkManagerFinal.Instance.ChunkParam.chunkHeight; y++)
                 {
                     BlockType _blockType = BlockType.Air;
                     if(y == _groundPos)
@@ -87,14 +89,13 @@ public class ChunkFinal : MonoBehaviour
     }
     void AddNeighborChunkFromDirection(Vector2Int _direction)
     {
-        Vector2Int _indexChunk = chunkParam.indexChunk + _direction;
+        Vector2Int _indexChunk = indexChunk + _direction;
         ChunkFinal _chunkNeighbor = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(_indexChunk);
         if (_chunkNeighbor) neighborChunk.Add(_direction, _chunkNeighbor);
     }
-    public IEnumerator UpdateMesh()
+    public void UpdateMesh()
     {
         RenderMesh();
-        yield return null;
     }
     public void RenderMesh()
     {

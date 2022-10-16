@@ -12,10 +12,6 @@ public class MeshData
     Mesh mesh;
     public Mesh Mesh => mesh;
     
-    public MeshData(ChunkFinal _chunk)
-    {
-        mesh = new Mesh();
-    } 
     public void UpdateMesh(MeshCollider _meshCollider, MeshFilter _meshFilter)
     {
         mesh = new Mesh();
