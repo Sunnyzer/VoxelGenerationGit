@@ -10,8 +10,10 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
     [SerializeField] ChunkParamFinal chunkParam;
     [SerializeField] ChunkFinal chunksPrefab;
     [SerializeField] Vector2Int offset;
+    [SerializeField] float viewFrustrum = -0.1f;
     ChunkFinal[,] chunks;
     bool pass = true;
+
     public WorldParam WorldParam => worldParam;
     public ChunkParamFinal ChunkParam => chunkParam;
 
@@ -28,6 +30,25 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
             OnFinishLoad?.Invoke();
             Debug.Log("time : " + Time.time);
             pass = false;
+        }
+        for (int x = 0; x < worldParam.chunkAmount; x++)
+        {
+            for (int z = 0; z < worldParam.chunkAmount; z++)
+            {
+                Transform _chunkT = chunks[x, z].transform;
+                Vector3 _posChunk = new Vector3(_chunkT.position.x + chunks[x, z].IndexChunk.x * 8 + 8, Camera.main.transform.position.y, _chunkT.position.z + chunks[x, z].IndexChunk.y * 8 + 8);;
+                Vector3 _direction = _posChunk - Camera.main.transform.position;
+                if (_direction.sqrMagnitude < 200)
+                {
+                    
+                    continue;
+                }
+                float _dot = Vector3.Dot(Camera.main.transform.forward, _direction);
+                if(_dot < viewFrustrum)
+                    _chunkT.gameObject.SetActive(false);
+                else
+                    _chunkT.gameObject.SetActive(true);
+            }
         }
     }
     IEnumerator GenerateChunks()

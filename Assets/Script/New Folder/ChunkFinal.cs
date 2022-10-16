@@ -33,22 +33,13 @@ public class ChunkFinal : MonoBehaviour
     [SerializeField] List<BlockData> blockRender = new List<BlockData>();
     Dictionary<Vector2Int, ChunkFinal> neighborChunk = new Dictionary<Vector2Int, ChunkFinal>();
     BlockData[,,] blocks;
-    Thread threadGenerate;
 
-    public Thread ThreadGenerate => threadGenerate;
+    public Vector2Int IndexChunk => indexChunk;
     public BlockData[,,] Blocks => blocks;
     public Vector3Int WorldPosition => new Vector3Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.z));
     public int ChunkSize => chunkParam.chunkSize;
     public int ChunkHeight => chunkParam.chunkHeight;
 
-    private void Awake()
-    {
-        //meshData = new MeshData();
-        //chunkParam = ChunkManagerFinal.Instance.ChunkParam;
-        //blocks = new BlockData[chunkParam.chunkSize, chunkParam.chunkHeight, chunkParam.chunkSize];
-        //threadGenerate = new Thread(new ThreadStart(GenerateBlocks));
-        //threadGenerate.Start();
-    }
     public void SetChunk(int _indexChunkX, int _indexChunkZ)
     {
         meshData = new MeshData();
@@ -208,7 +199,7 @@ public class ChunkFinal : MonoBehaviour
     }
     public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
-        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, -_normal);
+        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
         if (!_blockData) return;
         if (!_blockData.owner.blockRender.Remove(_blockData))
         {
