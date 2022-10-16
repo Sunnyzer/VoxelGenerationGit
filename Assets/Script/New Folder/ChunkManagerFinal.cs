@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.PlayerLoop;
 
 public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
 {
@@ -10,7 +11,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
     [SerializeField] ChunkFinal chunksPrefab;
     [SerializeField] Vector2Int offset;
     ChunkFinal[,] chunks;
-
+    bool pass = true;
     public WorldParam WorldParam => worldParam;
     public ChunkParamFinal ChunkParam => chunkParam;
 
@@ -19,13 +20,21 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         chunkParam = new ChunkParamFinal(worldParam.chunkSize, worldParam.chunkHeight, 1);
         yield return GenerateChunks();
     }
+    private void Update()
+    {
+        if (pass && ThreadManager.Instance.IsEmptyThreads)
+        {
+            StartCoroutine(RenderChunks());
+            OnFinishLoad?.Invoke();
+            Debug.Log("time : " + Time.time);
+            pass = false;
+        }
+    }
     IEnumerator GenerateChunks()
     {
         yield return CreateChunks();
+        //yield return new WaitForSeconds(1f);
         yield return InitChunks();
-        yield return RenderChunks();
-        OnFinishLoad?.Invoke();
-        Debug.Log("time : " + Time.time);
     }
     IEnumerator CreateChunks()
     {
@@ -37,8 +46,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
             for (int z = 0; z < _chunkAmount; z++)
             {
                 ChunkFinal _chunkFinal = Instantiate<ChunkFinal>(chunksPrefab, new Vector3(x * _chunkSize, 0, z * _chunkSize), Quaternion.identity, transform);
-                _chunkFinal.SetIndexChunk(x, z);
-                yield return _chunkFinal.GenerateBlocks();
+                _chunkFinal.SetChunk(x, z);
                 _chunkFinal.name = "Chunk" + (z + x * _chunkAmount);
                 chunks[x, z] = _chunkFinal;
             }
@@ -50,7 +58,8 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         int _chunkAmount = worldParam.chunkAmount;
         for (int x = 0; x < _chunkAmount; x++)
             for (int z = 0; z < _chunkAmount; z++)
-                yield return chunks[x, z].InitChunks();
+                ThreadManager.Instance.AddThread(chunks[x, z].InitChunks);
+        yield return null;
     }
     IEnumerator RenderChunks()
     {
@@ -58,6 +67,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         for (int x = 0; x < _chunkAmount; x++)
             for (int z = 0; z < _chunkAmount; z++)
                 chunks[x, z].UpdateMesh();
+
         yield return null;
     }
     

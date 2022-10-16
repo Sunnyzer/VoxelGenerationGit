@@ -348,6 +348,7 @@ GameObject:
   - component: {fileID: 139201777}
   - component: {fileID: 139201778}
   - component: {fileID: 139201779}
+  - component: {fileID: 139201780}
   m_Layer: 0
   m_Name: logic
   m_TagString: Untagged
@@ -444,7 +445,7 @@ MonoBehaviour:
   worldParam:
     chunkSize: 16
     chunkHeight: 150
-    chunkAmount: 4
+    chunkAmount: 10
     octaves: 3
     sizeBlock: 1
     amplitude: 0.7
@@ -473,6 +474,21 @@ MonoBehaviour:
   tileSizeX: 0
   tileSizeY: 0
   textureData: {fileID: 11400000, guid: d3f89e1ec812e1a47ac9533d212de1b3, type: 2}
+--- !u!114 &139201780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 139201773}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37b2d607e254e584b878f70f047b747b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  simultanousThread: 4
+  threadRunningCount: 0
+  threadQueueCount: 0
 --- !u!1 &205832658
 GameObject:
   m_ObjectHideFlags: 0

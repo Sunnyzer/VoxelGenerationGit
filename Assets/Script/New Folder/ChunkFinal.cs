@@ -34,6 +34,8 @@ public class ChunkFinal : MonoBehaviour
     Dictionary<Vector2Int, ChunkFinal> neighborChunk = new Dictionary<Vector2Int, ChunkFinal>();
     BlockData[,,] blocks;
     Thread threadGenerate;
+
+    public Thread ThreadGenerate => threadGenerate;
     public BlockData[,,] Blocks => blocks;
     public Vector3Int WorldPosition => new Vector3Int(Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y), Mathf.RoundToInt(transform.position.z));
     public int ChunkSize => chunkParam.chunkSize;
@@ -41,20 +43,29 @@ public class ChunkFinal : MonoBehaviour
 
     private void Awake()
     {
+        //meshData = new MeshData();
+        //chunkParam = ChunkManagerFinal.Instance.ChunkParam;
+        //blocks = new BlockData[chunkParam.chunkSize, chunkParam.chunkHeight, chunkParam.chunkSize];
+        //threadGenerate = new Thread(new ThreadStart(GenerateBlocks));
+        //threadGenerate.Start();
+    }
+    public void SetChunk(int _indexChunkX, int _indexChunkZ)
+    {
         meshData = new MeshData();
         chunkParam = ChunkManagerFinal.Instance.ChunkParam;
         blocks = new BlockData[chunkParam.chunkSize, chunkParam.chunkHeight, chunkParam.chunkSize];
-        //threadGenerate = new Thread(new ThreadStart(GenerateBlocks));
+        SetIndexChunk(_indexChunkX, _indexChunkZ);
+        ThreadManager.Instance.AddThread(GenerateBlocks);
     }
     public void SetIndexChunk(int _x, int _z) => indexChunk = new Vector2Int(_x, _z);
-    public IEnumerator GenerateBlocks()
+    public void GenerateBlocks()
     {
         int _chunkSize = chunkParam.chunkSize;
         for (int x = 0; x < _chunkSize; x++)
         {
             for (int z = 0; z < _chunkSize; z++)
             {
-                float _perlinNoise = ChunkManagerFinal.Instance.PerlinNoiseOctaves(WorldPosition.x + x, WorldPosition.z + z);
+                float _perlinNoise = ChunkManagerFinal.Instance.PerlinNoiseOctaves(indexChunk.x * _chunkSize + x, indexChunk.y * _chunkSize + z);
                 float _groundPos = Mathf.RoundToInt(_perlinNoise * chunkParam.chunkHeight);
                 for (int y = 0; y < ChunkManagerFinal.Instance.ChunkParam.chunkHeight; y++)
                 {
@@ -67,25 +78,29 @@ public class ChunkFinal : MonoBehaviour
                     blocks[x, y, z] = new BlockData(new Vector3Int(x,y,z), this, _blockType);
                 }
             }
-            yield return null;
         }
     }
-    public IEnumerator InitChunks()
+    public void InitChunks()
     {
         Direction.RunThroughAllDirection2D(AddNeighborChunkFromDirection);
-        RunThroughAllBlocks((_blockPos) =>
-        {
-            BlockData _blockData = blocks[_blockPos.x, _blockPos.y, _blockPos.z];
-            _blockData.SetNeighbor(this);
-            if (_blockData.blockType == BlockType.Air) return;
-            foreach (var item in _blockData.blocksNeighbor)
+        for (int x = 0; x < chunkParam.chunkSize; x++)
+        { 
+            for (int z = 0; z < chunkParam.chunkSize; z++)
             {
-                if (item.Value.blockType != BlockType.Air) continue;
-                blockRender.Add(_blockData);
-                break;
+                for (int y = 0; y < chunkParam.chunkHeight; y++)
+                {
+                    BlockData _blockData = blocks[x, y, z];
+                    _blockData.SetNeighbor(this);
+                    if (_blockData.blockType == BlockType.Air) continue;
+                    foreach (var item in _blockData.blocksNeighbor)
+                    {
+                        if (item.Value.blockType != BlockType.Air) continue;
+                        blockRender.Add(_blockData);
+                        break;
+                    }
+                }
             }
-        });
-        yield return null;
+        }
     }
     void AddNeighborChunkFromDirection(Vector2Int _direction)
     {
@@ -193,14 +208,13 @@ public class ChunkFinal : MonoBehaviour
     }
     public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
-        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
+        BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, -_normal);
         if (!_blockData) return;
-        if (!blockRender.Remove(_blockData))
+        if (!_blockData.owner.blockRender.Remove(_blockData))
         {
-            Debug.LogError("Failed Remove!!!");
+            Debug.Log("Failed Remove!!!");
         }
         _blockData.facePerDirection.Clear();
-        meshData.ResetVerticesAndTriangles();
         List<ChunkFinal> chunksToUpdate = new List<ChunkFinal>();
         chunksToUpdate.Add(this);
         BlockType _blockType = _blockData.blocksNeighbor[Vector3Int.down].blockType;
