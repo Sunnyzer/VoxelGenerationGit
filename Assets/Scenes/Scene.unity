@@ -624,7 +624,7 @@ MonoBehaviour:
   m_MinValue: 0.01
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 0.1
+  m_Value: 0.05
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -1903,6 +1903,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1698728128, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 2707694786280996533, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074746, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: m_RootOrder
       value: 2
@@ -1951,6 +1959,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 8077752294491074750, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 8077752294491074753, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
       propertyPath: height
       value: 0.62
@@ -1975,6 +1987,10 @@ PrefabInstance:
       propertyPath: cooldownSlider
       value: 
       objectReference: {fileID: 234441954}
+    - target: {fileID: 8077752294914834505, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 591ff19bfc78ca64f939db0d8cd64ba1, type: 3}
 --- !u!1 &1768512601

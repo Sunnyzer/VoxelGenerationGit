@@ -202,6 +202,7 @@ public class ChunkFinal : MonoBehaviour
         meshData.ResetVerticesAndTriangles();
         List<ChunkFinal> chunksToUpdate = new List<ChunkFinal>();
         chunksToUpdate.Add(this);
+        BlockType _blockType = _blockData.blocksNeighbor[Vector3Int.down].blockType;
         foreach (var item in _blockData.blocksNeighbor)
         {
             BlockData _blockDataNeighbor = item.Value;
@@ -209,7 +210,6 @@ public class ChunkFinal : MonoBehaviour
             if (_blockDataNeighbor.blockType == BlockType.Air)
             {
                 _chunkFinal.blockRender.Add(_blockDataNeighbor);
-                BlockType _blockType = _blockData.blocksNeighbor[Vector3Int.down].blockType;
                 if (_blockType == BlockType.Air)
                     _blockType = BlockType.Dirt;
                 _blockDataNeighbor.blockType = _blockType;

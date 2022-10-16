@@ -12,6 +12,7 @@ public class Player : MonoBehaviour
     [SerializeField] Vector3 moveDirection;
     [SerializeField] Vector3 velocity;
     [SerializeField] LayerMask groundLayer = 0;
+    [SerializeField] LayerMask playerLayer = 0;
     [SerializeField] float height = 2;
     [SerializeField] float moveSpeed = 10;
     [SerializeField] float jumpHigh = 400;
@@ -83,7 +84,11 @@ public class Player : MonoBehaviour
                 if (Input.GetMouseButton(0))
                     _chunk.DestroyWorldPositionBlock(pointPoint, _raycastHit.normal);
                 if (Input.GetMouseButton(1))
-                    _chunk.CreateWorldPositionBlock(pointPoint, _raycastHit.normal);
+                {
+                    Collider[] _overlapGameObject = Physics.OverlapSphere(pointPoint, 1, playerLayer);
+                    if(_overlapGameObject.Length == 0)
+                        _chunk.CreateWorldPositionBlock(pointPoint, _raycastHit.normal);
+                }
                 if (Input.GetMouseButton(2))
                     _chunk.DestroyWorldPositionRadius(pointPoint, _raycastHit.normal, radius);
                 cooldownBreak = 0;
