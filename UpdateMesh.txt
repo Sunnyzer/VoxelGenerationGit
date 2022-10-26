@@ -1,0 +1,7 @@
+
+{
+	int indexToDestroy = blockRender.IndexOf(_blockData);
+	vertices.RemoveRange(indexToDestroy, _blockData.faceCount * 4);
+	triangles.RemoveRange(triangles.Count - _blockData.faceCount * 6, _blockData.faceCount * 6);
+	blockRender.Remove(_blockData);
+}
