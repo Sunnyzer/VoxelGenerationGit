@@ -12,8 +12,6 @@ public class OldOldChunk : MonoBehaviour
     [SerializeField] BlockType[,,] blocks;
     [SerializeField] List<OldOldChunk> chunkNeighbor = new List<OldOldChunk>();
     [SerializeField] Vector3 posBlockDebug;
-    [SerializeField] bool drawVerticesGizmo = false;
-    [SerializeField] bool drawNeighBorGizmo = true;
     [SerializeField] Dictionary<Vector3, int> verticesId = new Dictionary<Vector3, int>();
     static public Vector3Int GetBlockPositionFromWorldPosition(Vector3 _position, Vector3 _direction)
     {
@@ -189,25 +187,5 @@ public class OldOldChunk : MonoBehaviour
             }
         }
         return _directionFill.ToArray();
-    }
-    private void OnDrawGizmosSelected()
-    {
-        if (!drawNeighBorGizmo) return;
-        int _count = chunkNeighbor.Count;
-        Gizmos.color = Color.red;
-        Vector3 _offset = Vector3.up * 2;
-        for (int i = 0; i < _count; i++)
-        {
-            OldOldChunk _chunk = chunkNeighbor[i];
-            Gizmos.DrawMesh(_chunk.chunkMesh, 0, _chunk.transform.position + _offset);
-        }
-    }
-    private void OnDrawGizmos()
-    {
-        if (!drawVerticesGizmo) return;
-        int _count = vertices.Count;
-        Gizmos.color = Color.yellow;
-        for (int i = 0; i < _count; i++)
-            Gizmos.DrawCube(vertices[i], Vector3.one);
     }
 }

@@ -33,6 +33,7 @@ public class ChunkFinal : MonoBehaviour
     [SerializeField] List<BlockData> blockRender = new List<BlockData>();
     Dictionary<Vector2Int, ChunkFinal> neighborChunk = new Dictionary<Vector2Int, ChunkFinal>();
     BlockData[,,] blocks;
+    bool canBeUpdate = true;
 
     public Vector2Int IndexChunk => indexChunk;
     public BlockData[,,] Blocks => blocks;
@@ -101,6 +102,13 @@ public class ChunkFinal : MonoBehaviour
     }
     public void UpdateMesh()
     {
+        canBeUpdate = true;
+        if (!canBeUpdate)
+        {
+            Debug.Log("non");
+            return;
+        }
+        canBeUpdate = false;
         RenderMesh();
     }
     public void RenderMesh()
@@ -125,6 +133,7 @@ public class ChunkFinal : MonoBehaviour
 
     public void DestroyWorldPositionRadius(Vector3 _blockPos, Vector3 _normal, int radius)
     {
+        canBeUpdate = true;
         List<BlockData> _toRender = new List<BlockData>();
         BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
         Vector3Int _blockWorldPos = BlockManager.Instance.GetBlockPositionWorldFromBlock(_blockData);
@@ -171,6 +180,7 @@ public class ChunkFinal : MonoBehaviour
     }
     public void DestroyWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
+        canBeUpdate = true;
         BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
         if (!_blockData) return;
         _blockData.DestroyBlock();
@@ -199,6 +209,7 @@ public class ChunkFinal : MonoBehaviour
     }
     public void CreateWorldPositionBlock(Vector3 _blockPos, Vector3 _normal)
     {
+        canBeUpdate = true;
         BlockData _blockData = BlockManager.Instance.GetBlockFromWorldPosition(_blockPos, _normal);
         if (!_blockData) return;
         if (!_blockData.owner.blockRender.Remove(_blockData))

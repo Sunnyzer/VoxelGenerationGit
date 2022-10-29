@@ -23,6 +23,7 @@ public class ThreadManager : Singleton<ThreadManager>
         {
             if (threadsRunning[i].ThreadState != ThreadState.Running)
             {
+                threadsRunning[i].Abort();
                 threadsRunning.RemoveAt(i);
                 if (threadsQueue.Count == 0) continue;
                 threadsQueue[0].Start();
