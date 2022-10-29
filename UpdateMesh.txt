@@ -1,0 +1,36 @@
+class BlockData 
+{
+	List<Vector3> vertices;
+	
+}
+
+
+{
+	vertices.Clear();
+	GetNeighborBlock(_blockData);
+	neighbor.AddFace(_faceCenter,_direction, _blockType);
+	if(!blockRender.Contains(neighbor))
+		blockRender.Add(neighbor);
+	blockRender.Remove(_blockData);
+	for (int i = 0; i < blockRender.Count; ++i)
+	{
+		vertices.AddRange(blockRender[i].vertices);
+	}
+	int faceAddCount = 6 - _blockData.faceCount;
+	if(faceAddCount > _blockData.faceCount)
+	triangles.RemoveRange(triangles.Count - _blockData.faceCount * 6, _blockData.faceCount * 6);
+	int _lastIndex = triangles[^2];
+	int[] t = new int[];
+	triangles.AddRange();
+	CheckNeighborBlock(x,y,z);
+	
+	blockRender.Remove(_blockData);
+}
+
+{
+	blocks[x,y,z] = new	BlockData(x,y,z);
+	CheckNeighborBlock(x,y,z);
+	vertices.RemoveRange(_faceCount * 4, _blockData.faceCount * 4);
+	triangles.RemoveRange(triangles.Count - _blockData.faceCount * 6, _blockData.faceCount * 6);
+	blockRender.Remove(_blockData);	
+}
