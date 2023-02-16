@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshCollider), typeof(MeshRenderer), typeof(MeshFilter))]
@@ -89,6 +90,7 @@ public class ChunkV2 : MonoBehaviour
     {
         
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsBlockPosInChunk(Vector3Int _blockPos)
     {
         ChunkParamFinal _chunkParam = ChunkManagerV2.Instance.ChunkParam;
@@ -96,6 +98,7 @@ public class ChunkV2 : MonoBehaviour
                 (_blockPos.y >= 0 && _blockPos.y < _chunkParam.chunkHeight) &&
                 (_blockPos.z >= 0 && _blockPos.z < _chunkParam.chunkSize);
     }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool IsBlockIndexInChunk(int _indexBlock)
     {
         return _indexBlock >= 0 && _indexBlock < count;
@@ -117,6 +120,12 @@ public class ChunkV2 : MonoBehaviour
         int z = _index;
         return new Vector3(x, y, z);
     }
+    public void AddNeighbor(Vector2Int _direction, ChunkV2 _chunk)
+    {
+        if(neighborChunk.ContainsKey(_direction))
+            neighborChunk[_direction] = _chunk;
+    }
+
     private void OnDrawGizmosSelected()
     { 
         foreach (var item in neighborChunk)
@@ -164,9 +173,4 @@ public class ChunkV2 : MonoBehaviour
         //}
     }
 
-    public void AddNeighbor(Vector2Int _direction, ChunkV2 _chunk)
-    {
-        if(neighborChunk.ContainsKey(_direction))
-            neighborChunk[_direction] = _chunk;
-    }
 }

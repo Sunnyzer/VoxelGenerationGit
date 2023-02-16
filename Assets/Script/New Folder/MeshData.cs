@@ -59,6 +59,7 @@ public class MeshData
         Vector3 _directionRight = Quaternion.AngleAxis(90, _upVector ? Vector3Int.right : Vector3Int.up) * _directionFace;
         Vector3 _directionUp = (_upVector ? Vector3.right : Vector3.up) * 0.5f;
         Vector3 _faceCenter = _blockPos + _directionFace;
+
         Vector3 _faceRightUp = _faceCenter + _directionRight + _directionUp;
         vertices.Add(_faceRightUp);
         Vector3 _faceLeftUp = _faceCenter - _directionRight + _directionUp;
@@ -77,8 +78,6 @@ public class MeshData
         triangles.Add(vertices.Count - 2);
 
         uvs.AddRange(BlockManager.Instance.FaceUVs(_direction, _blockType));
-        //Face _face = new Face(new Vector3[4] { _faceRightUp, _faceLeftUp, _faceRightDown, _faceLeftDown }, triangles.GetRange(triangles.Count - 6, 6).ToArray());
-       // return _face;
     }
     public void ResetVerticesAndTriangles()
     {
