@@ -40,7 +40,7 @@ public class Player : MonoBehaviour
     {
         float tempGravityScale = gravityScale;
         gravityScale = 0;
-        ChunkManagerFinal.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
+        //ChunkManagerFinal.Instance.OnFinishLoad += () => { gravityScale = tempGravityScale; };
     }
     private void Update()
     {

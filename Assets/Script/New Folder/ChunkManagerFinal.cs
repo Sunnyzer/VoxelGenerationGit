@@ -30,6 +30,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         OnChangeChunk += (test) => Debug.Log(test.name);
         yield return GenerateChunks();
     }
+
     private void Update()
     {
         if (pass && ThreadManager.Instance.IsEmptyThreads)
@@ -41,10 +42,10 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         }
         int _chunkSizeHalf = worldParam.chunkSize/2;
     }
+
     IEnumerator GenerateChunks()
     {
         yield return CreateChunks();
-        //yield return new WaitForSeconds(1f);
         yield return InitChunks();
     }
     IEnumerator CreateChunks()
@@ -56,7 +57,7 @@ public class ChunkManagerFinal : Singleton<ChunkManagerFinal>
         {
             for (int z = 0; z < _chunkAmount; z++)
             {
-                ChunkFinal _chunkFinal = Instantiate<ChunkFinal>(chunksPrefab, new Vector3(x * _chunkSize, 0, z * _chunkSize), Quaternion.identity, transform);
+                ChunkFinal _chunkFinal = Instantiate(chunksPrefab, new Vector3(x * _chunkSize, 0, z * _chunkSize), Quaternion.identity, transform);
                 _chunkFinal.SetChunk(x, z);
                 _chunkFinal.name = "Chunk" + (z + x * _chunkAmount);
                 chunks[x, z] = _chunkFinal;

@@ -5,10 +5,10 @@ using UnityEngine;
 
 public class ChunkLoaderC : MonoBehaviour
 {
-    public event Action<ChunkFinalC> OnChangeChunk = null;
-    [SerializeField] ChunkFinalC currentChunk;
+    public event Action<ChunkFinal> OnChangeChunk = null;
+    [SerializeField] ChunkFinal currentChunk;
     [SerializeField] int renderDistance = 4;
-    [SerializeField] List<ChunkFinalC> chunkLoad = new List<ChunkFinalC>();
+    [SerializeField] List<ChunkFinal> chunkLoad = new List<ChunkFinal>();
 
     private void Start()
     {
@@ -18,9 +18,9 @@ public class ChunkLoaderC : MonoBehaviour
             LoadNextChunk(_chunk.IndexChunk - currentChunk.IndexChunk);
             currentChunk = _chunk;
         };
-        ChunkManagerFinalC.Instance.OnFinishLoad += () =>
+        ChunkManagerFinal.Instance.OnFinishLoad += () =>
         {
-            ChunkFinalC _currentChunk = ChunkManagerFinalC.Instance.GetChunkFromWorldPosition(transform.position);
+            ChunkFinal _currentChunk = ChunkManagerFinal.Instance.GetChunkFromWorldPosition(transform.position);
             currentChunk = _currentChunk;
             StartCoroutine(LoadChunkAround());
         };
@@ -36,9 +36,9 @@ public class ChunkLoaderC : MonoBehaviour
                 int _indexToAdd = renderAmount - 2 + _indexToRemove;
                 chunkLoad[_indexToRemove]?.gameObject.SetActive(false);
                 chunkLoad.RemoveAt(_indexToRemove);
-                ChunkFinalC _chunkDirection = null;
+                ChunkFinal _chunkDirection = null;
                 if (chunkLoad[_indexToAdd])
-                    _chunkDirection = ChunkManagerFinalC.Instance.GetChunkFromIndexChunk(chunkLoad[_indexToAdd].IndexChunk + _direction);
+                    _chunkDirection = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(chunkLoad[_indexToAdd].IndexChunk + _direction);
                 chunkLoad.Insert(_indexToAdd + 1, _chunkDirection);
                 ActiveChunk(_chunkDirection);
             }
@@ -51,9 +51,9 @@ public class ChunkLoaderC : MonoBehaviour
                 int _indexToRemove = renderAmount - 1 + _indexToAdd;
                 chunkLoad[_indexToRemove]?.gameObject.SetActive(false);
                 chunkLoad.RemoveAt(_indexToRemove);//4
-                ChunkFinalC _chunkDirection = null;
+                ChunkFinal _chunkDirection = null;
                 if (chunkLoad[_indexToAdd])
-                    _chunkDirection = ChunkManagerFinalC.Instance.GetChunkFromIndexChunk(chunkLoad[_indexToAdd].IndexChunk + _direction);
+                    _chunkDirection = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(chunkLoad[_indexToAdd].IndexChunk + _direction);
                 chunkLoad.Insert(_indexToAdd, _chunkDirection); //0
                 ActiveChunk(_chunkDirection);
             }
@@ -64,9 +64,9 @@ public class ChunkLoaderC : MonoBehaviour
             int _blockRightLast = renderAmount * renderAmount - renderAmount;
             for (int i = 0; i < renderAmount; i++)
             {
-                ChunkFinalC _chunkDirection = null;
+                ChunkFinal _chunkDirection = null;
                 if(chunkLoad[_blockRightLast - renderAmount + i])
-                    _chunkDirection = ChunkManagerFinalC.Instance.GetChunkFromIndexChunk(chunkLoad[_blockRightLast - renderAmount + i].IndexChunk + _direction);
+                    _chunkDirection = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(chunkLoad[_blockRightLast - renderAmount + i].IndexChunk + _direction);
                 chunkLoad.Add(_chunkDirection);
                 ActiveChunk(_chunkDirection);
             }
@@ -75,12 +75,12 @@ public class ChunkLoaderC : MonoBehaviour
         {
             int _blockRightFirst = renderAmount * renderAmount - renderAmount;
             DesactivateAndRemoveChunk(_blockRightFirst, renderAmount);
-            ChunkFinalC[] _chunkToAdd = new ChunkFinalC[renderAmount];
+            ChunkFinal[] _chunkToAdd = new ChunkFinal[renderAmount];
             for (int i = 0; i < renderAmount; i++)
             {
-                ChunkFinalC _chunkDirection = null;
+                ChunkFinal _chunkDirection = null;
                 if(chunkLoad[i])
-                    _chunkDirection = ChunkManagerFinalC.Instance.GetChunkFromIndexChunk(chunkLoad[i].IndexChunk + _direction);
+                    _chunkDirection = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(chunkLoad[i].IndexChunk + _direction);
                 _chunkToAdd[i] = _chunkDirection;
                 ActiveChunk(_chunkDirection);
             }
@@ -93,7 +93,7 @@ public class ChunkLoaderC : MonoBehaviour
             chunkLoad[i]?.gameObject.SetActive(false);
         chunkLoad.RemoveRange(_indexStart, _count);
     }
-    public void ActiveChunk(ChunkFinalC _chunk)
+    public void ActiveChunk(ChunkFinal _chunk)
     {
         if (!_chunk) return;
         _chunk.UpdateMesh();
@@ -106,7 +106,7 @@ public class ChunkLoaderC : MonoBehaviour
             for (int z = -renderDistance; z < renderDistance + 1; z++)
             {
                 Vector2Int _indexChunk = currentChunk.IndexChunk + new Vector2Int(x, z);
-                ChunkFinalC _chunkNeighbor = ChunkManagerFinalC.Instance.GetChunkFromIndexChunk(_indexChunk);
+                ChunkFinal _chunkNeighbor = ChunkManagerFinal.Instance.GetChunkFromIndexChunk(_indexChunk);
                 ActiveChunk(_chunkNeighbor);
                 chunkLoad.Add(_chunkNeighbor);
             }
@@ -115,7 +115,7 @@ public class ChunkLoaderC : MonoBehaviour
     }
     void Update()
     {
-        ChunkFinalC _currentChunk = ChunkManagerFinalC.Instance.GetChunkFromWorldPosition(transform.position);
+        ChunkFinal _currentChunk = ChunkManagerFinal.Instance.GetChunkFromWorldPosition(transform.position);
         if(currentChunk != _currentChunk)
         {
             if(currentChunk)
