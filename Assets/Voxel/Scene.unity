@@ -2469,6 +2469,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
+      propertyPath: worldParam.frequence
+      value: 0.005
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
       propertyPath: worldParam.chunkAmount
       value: 10
       objectReference: {fileID: 0}
