@@ -91,4 +91,13 @@ public class MeshData
         triangles = _triangles;
         vertices = _vertices;
     }
+
+    public void GizmoDebug(Transform _chunk)
+    {
+        if(mesh)
+        for (int i = 0; i < mesh.normals.Length; i++)
+        {
+            Gizmos.DrawRay(_chunk.position + mesh.vertices[i], mesh.normals[i]);
+        }
+    }
 }

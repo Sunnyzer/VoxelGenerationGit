@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 public class ChunkManagerV2 : Singleton<ChunkManagerV2>
@@ -9,13 +10,31 @@ public class ChunkManagerV2 : Singleton<ChunkManagerV2>
     [SerializeField] WorldParam worldParam;
     [SerializeField] ChunkParamFinal chunkParam;
     [SerializeField] ChunkV2 chunksPrefab;
+    [SerializeField] ChunkV2[,] chunks;
+    [SerializeField] Texture2D texture;
     float time;
-    ChunkV2[,] chunks;
 
     public WorldParam WorldParam => worldParam;
     public ChunkParamFinal ChunkParam => chunkParam;
+    public ChunkV2[,] Chunks => chunks;
 
     private IEnumerator Start()
+    {
+        texture = new Texture2D(256, 256);
+        Color[] pix = new Color[256 * 256];
+        for (int i = 0; i < 256; i++)
+        {
+            for (int j = 0; j < 256; j++)
+            {
+                float _perlin = Mathf.PerlinNoise((float)i/256, (float)j /256);
+                pix[j * 256 + i] = new Color(_perlin, _perlin, _perlin);
+            }
+        }
+        texture.SetPixels(pix);
+        texture.Apply();
+        yield return GenerateVoxels();
+    }
+    public IEnumerator GenerateVoxels()
     {
         time = Time.time;
         chunkParam = new ChunkParamFinal(worldParam.chunkSize, worldParam.chunkHeight, 1);
@@ -57,7 +76,7 @@ public class ChunkManagerV2 : Singleton<ChunkManagerV2>
                     int _x = x + Direction.direction2D[i].x;
                     int _z = z + Direction.direction2D[i].y;
                     if(_x >= 0 && _x < chunks.GetLength(0) && _z >= 0 && _z < chunks.GetLength(1))
-                    chunks[x, z].AddNeighbor(Direction.direction2D[i], chunks[_x, _z]);
+                        chunks[x, z].AddNeighbor(Direction.direction2D[i], chunks[_x, _z]);
                 }
             }
         }
@@ -106,6 +125,19 @@ public class ChunkManagerV2 : Singleton<ChunkManagerV2>
             _value += Mathf.PerlinNoise((x) * _frequence, (z) * _frequence) * _amplitude;
             _amplitude *= worldParam.persistence;
             _frequence *= worldParam.lacunarity;
+        }
+        return _value;
+    }
+    public static float PerlinNoiseOctaves(int x, int z, float amplitude, float frequence, int octaves, float persistence, float lacunarity)
+    {
+        float _value = 0;
+        float _amplitude = amplitude;
+        float _frequence = frequence;
+        for (int i = 0; i < octaves; i++)
+        {
+            _value += Mathf.PerlinNoise((x) * _frequence, (z) * _frequence) * _amplitude;
+            _amplitude *= persistence;
+            _frequence *= lacunarity;
         }
         return _value;
     }

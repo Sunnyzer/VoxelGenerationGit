@@ -45,3 +45,9 @@ MonoBehaviour:
     side: {x: 7, y: 5}
     isSolid: 1
     generatesCollide: 1
+  - blockType: 0
+    up: {x: 0, y: 0}
+    down: {x: 0, y: 0}
+    side: {x: 0, y: 0}
+    isSolid: 0
+    generatesCollide: 0

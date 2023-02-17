@@ -2469,12 +2469,28 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
+      propertyPath: worldParam.octaves
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
+      propertyPath: worldParam.amplitude
+      value: 0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
       propertyPath: worldParam.frequence
-      value: 0.005
+      value: 0.002
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
+      propertyPath: worldParam.lacunarity
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
       propertyPath: worldParam.chunkAmount
-      value: 10
+      value: 25
+      objectReference: {fileID: 0}
+    - target: {fileID: 8888155685118720071, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
+      propertyPath: worldParam.persistence
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 8888155685118720093, guid: 00c8fc62e589660498bcc47b28f9cab9, type: 3}
       propertyPath: m_RootOrder

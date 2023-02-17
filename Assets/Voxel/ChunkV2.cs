@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(MeshCollider), typeof(MeshRenderer), typeof(MeshFilter))]
 public class ChunkV2 : MonoBehaviour
@@ -13,6 +14,7 @@ public class ChunkV2 : MonoBehaviour
     [SerializeField] MeshData meshData;
     [SerializeField] Vector3Int pos;
     [SerializeField] Vector2Int indexChunk;
+    [SerializeField] Texture2D text;
 
     Dictionary<Vector2Int, ChunkV2> neighborChunk = new Dictionary<Vector2Int, ChunkV2>();
     BlockType[] blocks;
@@ -36,6 +38,8 @@ public class ChunkV2 : MonoBehaviour
     }
     public IEnumerator GenerateBlocks(ChunkParamFinal _chunkParamFinal)
     {
+        text = new Texture2D(16, 256/2);
+        Color[] pix = new Color[16 * (256/2)];
         int _chunkSize = _chunkParamFinal.chunkSize;
         for (int x = 0; x < _chunkSize; x++)
         {
@@ -46,18 +50,35 @@ public class ChunkV2 : MonoBehaviour
                 for (int y = 0; y < _chunkParamFinal.chunkHeight; y++)
                 {
                     BlockType _blockType = BlockType.Air;
-                    if (y == _groundPos)
+                    
+                    if (y <= _groundPos)
                     {
-                        _blockType = BlockType.Grass_Dirt;
-                        //blockRenders.Add(y * _chunkParamFinal.chunkHeight + x * _chunkParamFinal.chunkSize + z);
+                        float xCoord = indexChunk.x + (float)x /_chunkParamFinal.chunkSize;
+                        float yCoord = (float)y/ _groundPos;
+                        float zCoord = indexChunk.y + (float)z/_chunkParamFinal.chunkSize;
+                        float _perlinNoiseG = Mathf.PerlinNoise(xCoord, yCoord) + Mathf.PerlinNoise(yCoord, zCoord);
+                        pix[x * _chunkSize + y] = new Color(_perlinNoiseG, _perlinNoiseG, _perlinNoiseG)/2;
+                        if(y != 0 && _perlinNoiseG < 0.5f && _perlinNoiseG > 0f)
+                        {
+                            _blockType = BlockType.Air;
+                        }
+                        else if(y == _groundPos)
+                        {
+                            _blockType = BlockType.Grass_Dirt;
+                        }
+                        else if (y == 0)
+                            _blockType = BlockType.Grass_Stone;
+                        else
+                        {
+                            _blockType = BlockType.Dirt;
+                        }
                     }
-                    else if (y < _groundPos)
-                        _blockType = BlockType.Dirt;
-
                     blocks[y * _chunkParamFinal.chunkHeight + x * _chunkParamFinal.chunkSize + z] = _blockType;
                 }
             }
         }
+        text.SetPixels(pix);
+        text.Apply();
         yield return null;
     }
     public IEnumerator RenderMesh()
@@ -69,53 +90,71 @@ public class ChunkV2 : MonoBehaviour
         {
             if (blocks[i] == BlockType.Air) continue;
             Vector3 _blockPos = GetPositionWithIndex(i);
-            if (IsBlockIndexInChunk(i + 1) && blocks[i + 1] == BlockType.Air)
+            if (IsBlockIndexInChunk(i + 1) && _blockPos.z != _chunkSize - 1 && blocks[i + 1] == BlockType.Air)
                 meshData.AddFaceV2(_blockPos, Vector3Int.forward, blocks[i]);
-            else if((i + 1) % _chunkSize == 0)
+            else if(_blockPos.z == _chunkSize - 1)
             {
                 ChunkV2 _neighbor = neighborChunk[Vector2Int.up];
-                if (_neighbor && _neighbor.IsBlockIndexInChunk(i - 15) && _neighbor.blocks[i - 15] == BlockType.Air)
+                Vector3Int _neighborBlock = new Vector3Int((int)_blockPos.x, (int)_blockPos.y, 0);
+                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
+                if (_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air)
+                {
+                    meshData.AddFaceV2(_blockPos, Vector3Int.forward, blocks[i]);
+                }
+                else if (!_neighbor)
                 {
                     meshData.AddFaceV2(_blockPos, Vector3Int.forward, blocks[i]);
                 }
             }
 
-            if (IsBlockIndexInChunk(i - 1) && blocks[i - 1] == BlockType.Air)
+            if (IsBlockIndexInChunk(i - 1) && _blockPos.z != 0 && blocks[i - 1] == BlockType.Air)
                 meshData.AddFaceV2(_blockPos, Vector3Int.back, blocks[i]);
-            else if(i % _chunkSize == 0)
+            else if (_blockPos.z == 0)
             {
                 ChunkV2 _neighbor = neighborChunk[Vector2Int.down];
-                if (_neighbor && _neighbor.IsBlockIndexInChunk(i + 15) && _neighbor.blocks[i + 15] == BlockType.Air)
+                Vector3Int _neighborBlock = new Vector3Int((int)_blockPos.x, (int)_blockPos.y, (int)(_chunkSize - 1 - _blockPos.z));
+                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
+                if (_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air)
+                {
+                    meshData.AddFaceV2(_blockPos, Vector3Int.back, blocks[i]);
+                }
+                else if(!_neighbor)
                 {
                     meshData.AddFaceV2(_blockPos, Vector3Int.back, blocks[i]);
                 }
             }
-            if(GetPositionWithIndex(i).x >= _chunkSize - 1)
+
+            if (IsBlockIndexInChunk(i + _chunkSize) && _blockPos.x != _chunkSize - 1 && blocks[i + _chunkSize] == BlockType.Air)
+                meshData.AddFaceV2(_blockPos, Vector3Int.right, blocks[i]);
+            else if(_blockPos.x == _chunkSize - 1)
             {
-                //TODO
                 ChunkV2 _neighbor = neighborChunk[Vector2Int.right];
-                if (_neighbor && _neighbor.IsBlockIndexInChunk((_chunkSize * _chunkSize - 1) - _chunkSize - i) && _neighbor.blocks[(_chunkSize * _chunkSize - 1) - _chunkSize - i] == BlockType.Air)
+                Vector3Int _neighborBlock = new Vector3Int(0, (int)_blockPos.y, (int)_blockPos.z);
+                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
+                if (_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air)
                 {
-                    blockRenders.Add(i);
-                    //Debug.Log(_blockPos);
+                    meshData.AddFaceV2(_blockPos, Vector3Int.right, blocks[i]);
+                }
+                else if (!_neighbor)
+                {
                     meshData.AddFaceV2(_blockPos, Vector3Int.right, blocks[i]);
                 }
             }
-            else if (IsBlockIndexInChunk(i + _chunkSize) && blocks[i + _chunkSize] == BlockType.Air)
-            {
-                meshData.AddFaceV2(_blockPos, Vector3Int.right, blocks[i]);
-            }
 
-            if (IsBlockIndexInChunk(i - _chunkSize) && blocks[i - _chunkSize] == BlockType.Air)
+            if (IsBlockIndexInChunk(i - _chunkSize) && _blockPos.x != 0 && blocks[i - _chunkSize] == BlockType.Air)
                 meshData.AddFaceV2(_blockPos, Vector3Int.left, blocks[i]);
-            else
+            else if(_blockPos.x == 0)
             {
                 ChunkV2 _neighbor = neighborChunk[Vector2Int.left];
-                if (_neighbor && _neighbor.IsBlockIndexInChunk(_chunkSize * _chunkSize + i) && _neighbor.blocks[_chunkSize * _chunkSize + i] == BlockType.Air)
+                Vector3Int _neighborBlock = new Vector3Int((int)(_chunkSize - 1 - _blockPos.x), (int)_blockPos.y, (int)_blockPos.z);
+                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
+                if (_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air)
                 {
-                    //blockRenders.Add(i);
-                    //Debug.Log(_blockPos);
-                    //meshData.AddFaceV2(_blockPos, Vector3Int.left, blocks[i]);
+                    meshData.AddFaceV2(_blockPos, Vector3Int.left, blocks[i]);
+                }
+                else if (!_neighbor)
+                {
+                    meshData.AddFaceV2(_blockPos, Vector3Int.left, blocks[i]);
                 }
             }
 
@@ -152,14 +191,20 @@ public class ChunkV2 : MonoBehaviour
             _neighbor = null;
         return _neighbor != null;
     }
-    public Vector3 GetPositionWithIndex(int _index)
+    public Vector3Int GetPositionWithIndex(int _index)
     {
-        int y = Mathf.FloorToInt((float)_index / ChunkManagerV2.Instance.ChunkParam.chunkHeight);
-        _index = _index - y * ChunkManagerV2.Instance.ChunkParam.chunkHeight;
-        int x = _index / ChunkManagerV2.Instance.ChunkParam.chunkSize;
-        _index = _index - x * ChunkManagerV2.Instance.ChunkParam.chunkSize;
+        ChunkParamFinal _chunkParam = ChunkManagerV2.Instance.ChunkParam;
+        int y = Mathf.FloorToInt((float)_index / _chunkParam.chunkHeight);
+        _index = _index - y * _chunkParam.chunkHeight;
+        int x = _index / _chunkParam.chunkSize;
+        _index = _index - x * _chunkParam.chunkSize;
         int z = _index;
-        return new Vector3(x, y, z);
+        return new Vector3Int(x, y, z);
+    }
+    public int GetIndexWithPosition(Vector3Int _blockPos)
+    {
+        ChunkParamFinal _chunkParam = ChunkManagerV2.Instance.ChunkParam;
+        return _blockPos.x * _chunkParam.chunkSize + _blockPos.y * _chunkParam.chunkHeight + _blockPos.z;
     }
     public void AddNeighbor(Vector2Int _direction, ChunkV2 _chunk)
     {
@@ -209,44 +254,6 @@ public class ChunkV2 : MonoBehaviour
             }
             Gizmos.DrawCube(transform.position + GetPositionWithIndex(blockRenders[i]), Vector3.one);
         }
+        meshData.GizmoDebug(transform);
     }
-    private void OnDrawGizmos()
-    {
-        //int _count = blockRenders.Count;
-        //for (int i = 0; i < _count; ++i)
-        //{
-        //    switch (blocks[blockRenders[i]])
-        //    {
-        //        case BlockType.Nothing:
-        //            break;
-        //        case BlockType.Air:
-        //            break;
-        //        case BlockType.Grass_Dirt:
-        //            Gizmos.color = Color.green;
-        //            break;
-        //        case BlockType.Dirt:
-        //            Gizmos.color = Color.yellow;
-        //            break;
-        //        case BlockType.Grass_Stone:
-        //            break;
-        //        case BlockType.Stone:
-        //            break;
-        //        case BlockType.TreeTrunk:
-        //            break;
-        //        case BlockType.TreeLeafesTransparent:
-        //            break;
-        //        case BlockType.TreeLeafsSolid:
-        //            break;
-        //        case BlockType.Water:
-        //            Gizmos.color = Color.blue;
-        //            break;
-        //        case BlockType.Sand:
-        //            break;
-        //        default:
-        //            break;
-        //    }
-        //    Gizmos.DrawCube(transform.position + GetPositionWithIndex(blockRenders[i]), Vector3.one);
-        //}
-    }
-
 }

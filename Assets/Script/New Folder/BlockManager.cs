@@ -12,9 +12,13 @@ public class BlockManager : Singleton<BlockManager>
     protected virtual void Awake()
     {
         base.Awake();
+        Init();
+    }
+    public void Init()
+    {
         foreach (var item in textureData.textureDataList)
         {
-            if(!blockTextureDataDictionary.ContainsKey(item.blockType))
+            if (!blockTextureDataDictionary.ContainsKey(item.blockType))
             {
                 blockTextureDataDictionary.Add(item.blockType, item);
             }
@@ -22,7 +26,6 @@ public class BlockManager : Singleton<BlockManager>
         tileSizeX = textureData.textureSizeX;
         tileSizeY = textureData.textureSizeY;
     }
-
     public Vector2Int TexturePosition(Vector3Int _direction, BlockType _blockType)
     {
         return blockTextureDataDictionary[_blockType][GetEDirectionFromVector3Int(_direction)];
@@ -32,18 +35,18 @@ public class BlockManager : Singleton<BlockManager>
         Vector2[] UVs = new Vector2[4];
         Vector2Int _tilePos = TexturePosition(_direction, _blockType);
 
+        //0,0
         UVs[3] = new Vector2(tileSizeX * _tilePos.x + textureOffset,
                              tileSizeY * _tilePos.y + textureOffset);
-        //0,0
+        //0.1,0
         UVs[2] = new Vector2(tileSizeX * _tilePos.x + tileSizeX - textureOffset,
                              tileSizeY * _tilePos.y + textureOffset);
-        //0.1,0
+        //0.1,0.1
         UVs[1] = new Vector2(tileSizeX * _tilePos.x + tileSizeX - textureOffset,
                              tileSizeY * _tilePos.y + tileSizeY - textureOffset);
-        //0.1,0.1
+        //0,0.1
         UVs[0] = new Vector2(tileSizeX * _tilePos.x + textureOffset,
                              tileSizeY * _tilePos.y + tileSizeY - textureOffset);
-        //0,0.1
         //2 1 0, 1 3 0
         return UVs;
     }
