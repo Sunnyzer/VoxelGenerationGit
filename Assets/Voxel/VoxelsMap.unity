@@ -723,7 +723,7 @@ GameObject:
   - component: {fileID: 1644054583}
   - component: {fileID: 1644054586}
   m_Layer: 0
-  m_Name: Camera
+  m_Name: CameraController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -840,7 +840,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   chunksPrefab: {fileID: 8945384900024837790, guid: 435a081a8137c2b4485677e681764634, type: 3}
-  chunkAmount: 5
+  chunkAmount: 20
   worldParam:
     octaves: 6
     amplitude: 0.5

@@ -8,7 +8,7 @@ public struct ChunkParam
 {
     public int chunkSize;
     public int chunkHeight;
-    public ChunkParam(int _chunkSize, int _chunkHeight, float _sizeBlock)
+    public ChunkParam(int _chunkSize, int _chunkHeight)
     {
         chunkSize = _chunkSize;
         chunkHeight = _chunkHeight;
@@ -21,13 +21,17 @@ public class Chunk : MonoBehaviour
     [SerializeField] MeshCollider meshCollider;
     [SerializeField] MeshFilter meshFilter;
     [SerializeField] MeshRenderer meshRenderer;
-    [SerializeField] MeshData meshData;
-    [SerializeField] Vector3Int pos;
-    [SerializeField] Vector2Int indexChunk;
+    MeshData meshData = new MeshData();
+    Vector2Int indexChunk;
 
-    Dictionary<Vector2Int, Chunk> neighborChunk = new Dictionary<Vector2Int, Chunk>();
+    Dictionary<Vector2Int, Chunk> neighborChunk = new Dictionary<Vector2Int, Chunk>()
+    {
+        { Vector2Int.right,null },
+        { Vector2Int.left,null },
+        { Vector2Int.down,null },
+        { Vector2Int.up,null },
+    };
     BlockType[] blocks;
-    List<int> blockRenders = new List<int>();
     int count = 0;
 
     public Vector2Int IndexChunk => indexChunk;
@@ -37,28 +41,22 @@ public class Chunk : MonoBehaviour
 
     public IEnumerator Init(ChunkParam _chunkParamFinal, int _indexX, int _indexZ)
     {
-        meshData = new MeshData();
         indexChunk = new Vector2Int(_indexX, _indexZ);
         count = _chunkParamFinal.chunkSize * _chunkParamFinal.chunkHeight * _chunkParamFinal.chunkSize;
         blocks = new BlockType[count];
-        for (int i = 0; i < Direction.direction2D.Count; ++i)
-            neighborChunk.Add(Direction.direction2D[i], null);
         yield return GenerateBlocks(_chunkParamFinal);
     }
     public IEnumerator GenerateBlocks(ChunkParam _chunkParamFinal)
     {
         int _chunkSize = _chunkParamFinal.chunkSize;
         int _chunkHeight = _chunkParamFinal.chunkHeight;
-        int x = 0;
-        int y = 0;
-        int z = 0;
-        for (x = 0; x < _chunkSize; x++)
+        for (int x = 0; x < _chunkSize; x++)
         {
-            for (z = 0; z < _chunkSize; z++)
+            for (int z = 0; z < _chunkSize; z++)
             {
                 float _perlinNoise = ChunkManager.Instance.PerlinNoiseOctaves(indexChunk.x * _chunkSize + x, indexChunk.y * _chunkSize + z);
                 float _groundPos = Mathf.RoundToInt(_perlinNoise * _chunkHeight);
-                for (y = 0; y < _chunkHeight; y++)
+                for (int y = 0; y < _chunkHeight; y++)
                 {
                     int _index = y * _chunkHeight + x * _chunkSize + z;
                     BlockType _blockType = BlockType.Air;
@@ -66,13 +64,9 @@ public class Chunk : MonoBehaviour
                     {
                         _blockType = BlockType.Dirt;
                         if(y == _groundPos)
-                        {
                             _blockType = BlockType.Grass_Dirt;
-                        }
                         else if (y == 0)
-                        {
                             _blockType = BlockType.Grass_Stone;
-                        }
                     }
                     blocks[_index] = _blockType;
                 }
@@ -80,88 +74,65 @@ public class Chunk : MonoBehaviour
         }
         yield return null;
     }
-    public IEnumerator AddAllFace()
+    public IEnumerator Render()
     {
-        ChunkParam _chunkParam = ChunkManager.Instance.ChunkParam;
-        int _chunkSize = _chunkParam.chunkSize;
-        int _chunkHeight = _chunkParam.chunkHeight;
         for (int i = 0; i < count; ++i)
         {
             BlockType _blockType = blocks[i];
             if (_blockType == BlockType.Air) continue;
+
             Vector3 _blockPos = GetPositionWithIndex(i);
-            if (IsBlockIndexInChunk(i + 1) && _blockPos.z != _chunkSize - 1 && blocks[i + 1] == BlockType.Air)
-                meshData.AddFaceV2(_blockPos, Vector3Int.forward, _blockType);
-            else if(_blockPos.z == _chunkSize - 1)
-            {
-                Chunk _neighbor = neighborChunk[Vector2Int.up];
-                Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, Vector3Int.forward);
-                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
-                if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-                    meshData.AddFaceV2(_blockPos, Vector3Int.forward, _blockType);
-            }
 
-            if (IsBlockIndexInChunk(i - 1) && _blockPos.z != 0 && blocks[i - 1] == BlockType.Air)
-                meshData.AddFaceV2(_blockPos, Vector3Int.back, _blockType);
-            else if (_blockPos.z == 0)
-            {
-                Chunk _neighbor = neighborChunk[Vector2Int.down];
-                Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, Vector3Int.back);
-                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
-                if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-                    meshData.AddFaceV2(_blockPos, Vector3Int.back, _blockType);
-            }
-
-            if (IsBlockIndexInChunk(i + _chunkSize) && _blockPos.x != _chunkSize - 1 && blocks[i + _chunkSize] == BlockType.Air)
-                meshData.AddFaceV2(_blockPos, Vector3Int.right, _blockType);
-            else if(_blockPos.x == _chunkSize - 1)
-            {
-                Chunk _neighbor = neighborChunk[Vector2Int.right];
-                Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, Vector3Int.right);
-                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
-                if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-                    meshData.AddFaceV2(_blockPos, Vector3Int.right, _blockType);
-            }
-
-            if (IsBlockIndexInChunk(i - _chunkSize) && _blockPos.x != 0 && blocks[i - _chunkSize] == BlockType.Air)
-                meshData.AddFaceV2(_blockPos, Vector3Int.left, _blockType);
-            else if(_blockPos.x == 0)
-            {
-                Chunk _neighbor = neighborChunk[Vector2Int.left];
-                Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, Vector3Int.left);
-                int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
-                if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-                    meshData.AddFaceV2(_blockPos, Vector3Int.left, _blockType);
-            }
-
-            if (IsBlockIndexInChunk(i + _chunkHeight) && blocks[i + _chunkHeight] == BlockType.Air)
-                meshData.AddFaceV2(_blockPos, Vector3Int.up, _blockType);
-            if (IsBlockIndexInChunk(i - _chunkHeight) && blocks[i - _chunkHeight] == BlockType.Air)
-                meshData.AddFaceV2(_blockPos, Vector3Int.down, _blockType);
+            for (int j = 0; j < Direction.allDirection.Count; j++)
+                SetFace(_blockPos, Direction.allDirection[j], _blockType);
         }
         meshData.UpdateMesh(meshCollider, meshFilter);
         yield return null;
     }
-    /*public void SetFace(int _index, Vector3 _blockPos, Vector2Int _direction, BlockType _blockType)
+    public bool IsBlockBorderDirection(Vector3 _blockPos, Vector3Int _direction)
     {
         ChunkParam _chunkParam = ChunkManager.Instance.ChunkParam;
         int _chunkSize = _chunkParam.chunkSize;
-        int _chunkHeight = _chunkParam.chunkHeight;
-        Vector3Int _direction3 = new Vector3Int(_direction.x, 0, _direction.y);
-        //bool _border = _direction.x == -1 ?  : _direction.x == -1 ? _blockPos.x != 0 : _blockPos.x != _chunkSize - 1;
-        if (IsBlockIndexInChunk(_index) && _border && blocks[_index] == BlockType.Air)
-            meshData.AddFaceV2(_blockPos, _direction3, _blockType);
-        else if (_blockPos.x == 0)
+        if (Vector3Int.forward == _direction)
+            return _blockPos.z == _chunkSize - 1;
+        if (Vector3Int.back == _direction)
+            return _blockPos.z == 0;
+        if (Vector3Int.right == _direction)
+            return _blockPos.x == _chunkSize - 1;
+        if (Vector3Int.left == _direction)
+            return _blockPos.x == 0;
+        return false;
+    }
+    public bool IsBlockBorder(Vector3 _blockPos)
+    {
+        ChunkParam _chunkParam = ChunkManager.Instance.ChunkParam;
+        int _chunkSize = _chunkParam.chunkSize;
+        if (_blockPos.z == _chunkSize - 1)
+            return true;
+        if (_blockPos.z == 0)
+            return true;
+        if (_blockPos.x == _chunkSize - 1)
+            return true;
+        if (_blockPos.x == 0)
+            return true;
+        return false;
+    }
+    public void SetFace(Vector3 _blockPos, Vector3Int _direction, BlockType _blockType)
+    {
+        Vector3Int _blockPosInt = new Vector3Int((int)_blockPos.x, (int)_blockPos.y, (int)_blockPos.z);
+        bool _border = IsBlockBorderDirection(_blockPos, _direction);
+        if (IsBlockPosInChunk(_blockPosInt + _direction) && blocks[GetIndexWithPosition(_blockPosInt + _direction)] == BlockType.Air && !_border)
+            meshData.AddFaceV2(_blockPos, _direction, _blockType);
+        else if (_border)
         {
-            Chunk _neighbor = neighborChunk[_direction];
-            Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, _direction3);
+            Vector2Int _direction2 = new Vector2Int(_direction.x, _direction.z);
+            Chunk _neighbor = neighborChunk[_direction2];
+            Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, _direction);
             int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
             if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-            {
-                meshData.AddFaceV2(_blockPos, _direction3, _blockType);
-            }
+                meshData.AddFaceV2(_blockPos, _direction, _blockType);
         }
-    }*/
+    }
     public Vector3Int GetPositionNeighborBlock(Vector3 _blockPos, Vector3Int _direction)
     {
         ChunkParam _chunkParam = ChunkManager.Instance.ChunkParam;

@@ -18,22 +18,18 @@ public class ChunkManager : Singleton<ChunkManager>
     public ChunkParam ChunkParam => chunkParam;
     public Chunk[,] Chunks => chunks;
 
-    private IEnumerator Start()
-    {
-        yield return GenerateVoxels();
-    }
+    private IEnumerator Start() => GenerateVoxels();
     public IEnumerator GenerateVoxels()
     {
         timeRender = Time.time;
         timeData = Time.time;
-        chunkParam = new ChunkParam(chunkParam.chunkSize, chunkParam.chunkHeight, 1);
         yield return GenerateChunks();
     }
     IEnumerator GenerateChunks()
     {
         yield return CreateChunks();
+        SetChunksNeighbor();
         Debug.Log("Generation Data finish in : " + (Time.time - timeData));
-        GiveNeighbor();
         yield return RenderChunks();
         Debug.Log("Generation Render finish in : " + (Time.time - timeRender));
     }
@@ -53,7 +49,14 @@ public class ChunkManager : Singleton<ChunkManager>
         }
         yield return null;
     }
-    void GiveNeighbor()
+    IEnumerator RenderChunks()
+    {
+        for (int x = 0; x < chunkAmount; x++)
+            for (int z = 0; z < chunkAmount; z++)
+                yield return chunks[x, z].Render();
+    }
+
+    void SetChunksNeighbor()
     {
         int _chunkLenght0 = chunks.GetLength(0);
         int _chunkLenght1 = chunks.GetLength(1);
@@ -73,12 +76,7 @@ public class ChunkManager : Singleton<ChunkManager>
             }
         }
     }
-    IEnumerator RenderChunks()
-    {
-        for (int x = 0; x < chunkAmount; x++)
-            for (int z = 0; z < chunkAmount; z++)
-                yield return chunks[x, z].AddAllFace();
-    }
+
     public Chunk GetChunkFromWorldPosition(float _worldPosX, float _worldPosY, float _worldPosZ)
     {
         int x = Mathf.RoundToInt(_worldPosX) / chunkParam.chunkSize;
@@ -97,14 +95,14 @@ public class ChunkManager : Singleton<ChunkManager>
             return chunks[_indexChunkX, _indexChunkZ];
         return null;
     }
+    public Chunk GetChunkFromIndexChunk(Vector2Int _indexChunk)
+    {
+        return GetChunkFromIndexChunk(_indexChunk.x, _indexChunk.y);
+    }
     public bool IsIndexChunkInChunkManager(int _indexChunkX, int _indexChunkZ)
     {
         return (_indexChunkX < chunkAmount && _indexChunkX >= 0) &&
                (_indexChunkZ < chunkAmount && _indexChunkZ >= 0);
-    }
-    public Chunk GetChunkFromIndexChunk(Vector2Int _indexChunk)
-    {
-        return GetChunkFromIndexChunk(_indexChunk.x, _indexChunk.y);
     }
 
     public float PerlinNoiseOctaves(int x, int z)

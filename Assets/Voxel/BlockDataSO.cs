@@ -1,4 +1,3 @@
-using JetBrains.Annotations;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,14 +7,6 @@ public class BlockDataSO : ScriptableObject
 {
     public float textureSizeX, textureSizeY;
     public List<TextureData> textureDataList;
-
-}
-[Serializable]
-public enum EDirection
-{
-    Side,
-    Up,
-    Down,
 }
 
 [Serializable]

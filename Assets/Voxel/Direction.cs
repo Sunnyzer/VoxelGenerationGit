@@ -2,6 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
+[Serializable]
+public enum EDirection
+{
+    Side,
+    Up,
+    Down,
+}
+
 public static class Direction
 {
     public static List<Vector2Int> direction2D = new List<Vector2Int>()
