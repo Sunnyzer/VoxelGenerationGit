@@ -98,9 +98,7 @@ public class Chunk : MonoBehaviour
                 Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, Vector3Int.forward);
                 int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
                 if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-                {
                     meshData.AddFaceV2(_blockPos, Vector3Int.forward, _blockType);
-                }
             }
 
             if (IsBlockIndexInChunk(i - 1) && _blockPos.z != 0 && blocks[i - 1] == BlockType.Air)
@@ -111,9 +109,7 @@ public class Chunk : MonoBehaviour
                 Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, Vector3Int.back);
                 int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
                 if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
-                {
                     meshData.AddFaceV2(_blockPos, Vector3Int.back, _blockType);
-                }
             }
 
             if (IsBlockIndexInChunk(i + _chunkSize) && _blockPos.x != _chunkSize - 1 && blocks[i + _chunkSize] == BlockType.Air)
