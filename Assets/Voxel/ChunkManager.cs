@@ -7,7 +7,7 @@ public class ChunkManager : Singleton<ChunkManager>
     public event Action OnFinishLoad = null;
 
     [SerializeField] Chunk chunksPrefab;
-    [SerializeField] int chunkAmount = 5;
+    [SerializeField] int chunkAmountXZ = 5;
     [SerializeField] WorldParam worldParam;
     [SerializeField] Chunk[,] chunks;
     [SerializeField] ChunkParam chunkParam;
@@ -17,6 +17,7 @@ public class ChunkManager : Singleton<ChunkManager>
     public WorldParam WorldParam => worldParam;
     public ChunkParam ChunkParam => chunkParam;
     public Chunk[,] Chunks => chunks;
+    public int ChunkAmountXZ => chunkAmountXZ;
 
     private IEnumerator Start() => GenerateVoxels();
     public IEnumerator GenerateVoxels()
@@ -36,14 +37,14 @@ public class ChunkManager : Singleton<ChunkManager>
     IEnumerator CreateChunks()
     {
         int _chunkSize = chunkParam.chunkSize;
-        chunks = new Chunk[chunkAmount, chunkAmount];
-        for (int x = 0; x < chunkAmount; ++x)
+        chunks = new Chunk[chunkAmountXZ, chunkAmountXZ];
+        for (int x = 0; x < chunkAmountXZ; ++x)
         {
-            for (int z = 0; z < chunkAmount; ++z)
+            for (int z = 0; z < chunkAmountXZ; ++z)
             {
                 Chunk _chunkFinal = Instantiate(chunksPrefab, new Vector3(x * _chunkSize, 0, z * _chunkSize), Quaternion.identity, transform);
                 yield return _chunkFinal.Init(chunkParam, x, z);
-                _chunkFinal.name = "Chunk" + (z + x * chunkAmount);
+                _chunkFinal.name = "Chunk" + (z + x * chunkAmountXZ);
                 chunks[x, z] = _chunkFinal;
             }
         }
@@ -51,8 +52,8 @@ public class ChunkManager : Singleton<ChunkManager>
     }
     IEnumerator RenderChunks()
     {
-        for (int x = 0; x < chunkAmount; x++)
-            for (int z = 0; z < chunkAmount; z++)
+        for (int x = 0; x < chunkAmountXZ; x++)
+            for (int z = 0; z < chunkAmountXZ; z++)
                 yield return chunks[x, z].Render();
     }
 
@@ -60,9 +61,9 @@ public class ChunkManager : Singleton<ChunkManager>
     {
         int _chunkLenght0 = chunks.GetLength(0);
         int _chunkLenght1 = chunks.GetLength(1);
-        for (int x = 0; x < chunkAmount; ++x)
+        for (int x = 0; x < chunkAmountXZ; ++x)
         {
-            for (int z = 0; z < chunkAmount; ++z)
+            for (int z = 0; z < chunkAmountXZ; ++z)
             {
                 int _count = Direction.direction2D.Count;
                 for (int i = 0; i < _count; i++)
@@ -101,8 +102,8 @@ public class ChunkManager : Singleton<ChunkManager>
     }
     public bool IsIndexChunkInChunkManager(int _indexChunkX, int _indexChunkZ)
     {
-        return (_indexChunkX < chunkAmount && _indexChunkX >= 0) &&
-               (_indexChunkZ < chunkAmount && _indexChunkZ >= 0);
+        return (_indexChunkX < chunkAmountXZ && _indexChunkX >= 0) &&
+               (_indexChunkZ < chunkAmountXZ && _indexChunkZ >= 0);
     }
 
     public float PerlinNoiseOctaves(int x, int z)
