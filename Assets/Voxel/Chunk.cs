@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 [Serializable]
@@ -32,6 +33,7 @@ public class Chunk : MonoBehaviour
         { Vector2Int.up,null },
     };
     BlockType[] blocks;
+    List<int> blocksRender = new List<int>();
     int count = 0;
 
     public Vector2Int IndexChunk => indexChunk;
@@ -84,7 +86,9 @@ public class Chunk : MonoBehaviour
             Vector3 _blockPos = GetPositionWithIndex(i);
 
             for (int j = 0; j < Direction.allDirection.Count; j++)
+            {
                 SetFace(_blockPos, Direction.allDirection[j], _blockType);
+            }
         }
         meshData.UpdateMesh(meshCollider, meshFilter);
         yield return null;
@@ -122,7 +126,12 @@ public class Chunk : MonoBehaviour
         Vector3Int _blockPosInt = new Vector3Int((int)_blockPos.x, (int)_blockPos.y, (int)_blockPos.z);
         bool _border = IsBlockBorderDirection(_blockPos, _direction);
         if (IsBlockPosInChunk(_blockPosInt + _direction) && blocks[GetIndexWithPosition(_blockPosInt + _direction)] == BlockType.Air && !_border)
+        {
+            int _index = GetIndexWithPosition(_blockPosInt);
+            if(!blocksRender.Contains(_index))
+                blocksRender.Add(_index);
             meshData.AddFaceV2(_blockPos, _direction, _blockType);
+        }
         else if (_border)
         {
             Vector2Int _direction2 = new Vector2Int(_direction.x, _direction.z);
@@ -130,7 +139,12 @@ public class Chunk : MonoBehaviour
             Vector3Int _neighborBlock = GetPositionNeighborBlock(_blockPos, _direction);
             int _indexNeighbor = GetIndexWithPosition(_neighborBlock);
             if ((_neighbor && _neighbor.IsBlockIndexInChunk(_indexNeighbor) && _neighbor.blocks[_indexNeighbor] == BlockType.Air) || !_neighbor)
+            {
+                int _index = GetIndexWithPosition(_blockPosInt);
+                if (!blocksRender.Contains(_index))
+                    blocksRender.Add(_index);
                 meshData.AddFaceV2(_blockPos, _direction, _blockType);
+            }
         }
     }
     public Vector3Int GetPositionNeighborBlock(Vector3 _blockPos, Vector3Int _direction)
@@ -165,7 +179,40 @@ public class Chunk : MonoBehaviour
             _neighbor = null;
         return _neighbor != null;
     }
-
+    public void DestroyBlock(Vector3 _point)
+    {
+        Vector3Int _blockPos = BlockManager.GetBlockPositionWithWorldPosition(_point) - WorldPosition;
+        Debug.DrawRay(_blockPos, Vector3.up, Color.red, 2);
+        int _index = GetIndexWithPosition(_blockPos);
+        blocks[_index] = BlockType.Air;
+        if (IsBlockBorderDirection(_blockPos, Vector3Int.forward))
+        {
+            GetChunkNeighbor(Vector2Int.up, out Chunk _neighborChunk);
+            _neighborChunk?.Rerender();
+        }
+        if (IsBlockBorderDirection(_blockPos, Vector3Int.back))
+        {
+            GetChunkNeighbor(Vector2Int.down, out Chunk _neighborChunk);
+            _neighborChunk?.Rerender();
+        }
+        if (IsBlockBorderDirection(_blockPos, Vector3Int.right))
+        {
+            GetChunkNeighbor(Vector2Int.right, out Chunk _neighborChunk);
+            _neighborChunk?.Rerender();
+        }
+        if (IsBlockBorderDirection(_blockPos, Vector3Int.left))
+        {
+            GetChunkNeighbor(Vector2Int.left, out Chunk _neighborChunk);
+            _neighborChunk?.Rerender();
+        }
+        Rerender();
+    }
+    public void Rerender()
+    {
+        meshData.ResetVerticesAndTriangles();
+        StopCoroutine(Render());
+        StartCoroutine(Render());
+    }
     public Vector3Int GetPositionWithIndex(int _index)
     {
         ChunkParam _chunkParam = ChunkManager.Instance.ChunkParam;

@@ -11,7 +11,6 @@ public class MeshData
 
     Mesh mesh;
     public Mesh Mesh => mesh;
-    
     public void UpdateMesh(MeshCollider _meshCollider, MeshFilter _meshFilter)
     {
         mesh = new Mesh();

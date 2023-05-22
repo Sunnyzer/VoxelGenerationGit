@@ -60,6 +60,11 @@ public class BlockManager : Singleton<BlockManager>
         else
             return EDirection.Side;
     }
+    public static Vector3Int GetBlockPositionWithWorldPosition(Vector3 _point)
+    {
+        Vector3Int _blockPos = new Vector3Int(Mathf.FloorToInt(_point.x + 0.5f), Mathf.FloorToInt(_point.y + 0.5f), Mathf.FloorToInt(_point.z + 0.5f));
+        return _blockPos;
+    }
     //public BlockData GetBlockFromWorldPosition(Vector3 _blockWorldPos, Vector3 _normal)
     //{
     //    ChunkFinal _chunk = ChunkManagerFinal.Instance.GetChunkFromWorldPosition(_blockWorldPos);
